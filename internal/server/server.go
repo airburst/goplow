@@ -38,6 +38,8 @@ type Event struct {
 	Data       []map[string]interface{} `json:"data"`
 	Timestamp  time.Time                `json:"timestamp"`
 	ReceivedAt time.Time                `json:"receivedAt"`
+	// UnwrapSingleItem indicates whether to display single-item arrays as a single object
+	UnwrapSingleItem bool `json:"-"`
 }
 
 // SSEClient represents an SSE connection
@@ -97,6 +99,11 @@ func New(config Config) *AppServer {
 
 // AddEvent adds a new analytics event and broadcasts it to SSE clients
 func (s *AppServer) AddEvent(schema string, data []map[string]interface{}) {
+	s.AddEventWithTime(schema, data, time.Now())
+}
+
+// AddEventWithTime adds a new analytics event with a specific timestamp and broadcasts it to SSE clients
+func (s *AppServer) AddEventWithTime(schema string, data []map[string]interface{}, timestamp time.Time) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -105,7 +112,7 @@ func (s *AppServer) AddEvent(schema string, data []map[string]interface{}) {
 		ID:         s.eventID,
 		Schema:     schema,
 		Data:       data,
-		Timestamp:  time.Now(),
+		Timestamp:  timestamp,
 		ReceivedAt: time.Now(),
 	}
 
@@ -230,8 +237,31 @@ func (s *AppServer) broadcastNewEvent(event Event) {
 
 // SendEventToClient sends a single event to an SSE client as JSON
 func (s *AppServer) SendEventToClient(client *SSEClient, event Event) error {
+	// If UnwrapSingleItem is true and there's only one data item, unwrap it
+	var dataToSend interface{} = event.Data
+	if event.UnwrapSingleItem && len(event.Data) == 1 {
+		dataToSend = event.Data[0]
+	}
+
+	// Create a custom event structure for JSON marshaling
+	type EventForSSE struct {
+		ID         int         `json:"id"`
+		Schema     string      `json:"schema"`
+		Data       interface{} `json:"data"`
+		Timestamp  time.Time   `json:"timestamp"`
+		ReceivedAt time.Time   `json:"receivedAt"`
+	}
+
+	eventForSSE := EventForSSE{
+		ID:         event.ID,
+		Schema:     event.Schema,
+		Data:       dataToSend,
+		Timestamp:  event.Timestamp,
+		ReceivedAt: event.ReceivedAt,
+	}
+
 	// Marshal event to JSON
-	eventJSON, err := json.Marshal(event)
+	eventJSON, err := json.Marshal(eventForSSE)
 	if err != nil {
 		return err
 	}

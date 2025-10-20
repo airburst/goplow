@@ -118,7 +118,7 @@ func transformEvent(eventData map[string]interface{}) map[string]interface{} {
 // transformPageView transforms a Page View event
 func transformPageView(data map[string]interface{}) map[string]interface{} {
 	result := map[string]interface{}{
-		"title": "Page View",
+		"Title": "Page View",
 	}
 
 	if v, ok := data["url"]; ok {
@@ -149,7 +149,7 @@ func transformPageView(data map[string]interface{}) map[string]interface{} {
 // transformStructuredEvent transforms a Structured Event
 func transformStructuredEvent(data map[string]interface{}) map[string]interface{} {
 	result := map[string]interface{}{
-		"title": "Structured Event",
+		"Title": "Structured Event",
 	}
 
 	if v, ok := data["se_ca"]; ok {
@@ -198,7 +198,7 @@ func transformStructuredEvent(data map[string]interface{}) map[string]interface{
 // transformUnstructuredEvent transforms an Unstructured (Self-Describing) Event
 func transformUnstructuredEvent(data map[string]interface{}) map[string]interface{} {
 	result := map[string]interface{}{
-		"title": "Self-Describing Event",
+		"Title": "Self-Describing Event",
 	}
 
 	if v, ok := data["url"]; ok {
@@ -222,12 +222,18 @@ func transformUnstructuredEvent(data map[string]interface{}) map[string]interfac
 
 // transformEventForDisplay transforms an entire Event for display via SSE
 // This transforms each data item in the event based on the event type
+// For single-item arrays, it will unwrap them in the JSON output
 func transformEventForDisplay(event server.Event) server.Event {
 	transformedEvent := event
 	transformedEvent.Data = make([]map[string]interface{}, len(event.Data))
 
 	for i, dataItem := range event.Data {
 		transformedEvent.Data[i] = transformEvent(dataItem)
+	}
+
+	// If there's only one data item, mark it for unwrapping in JSON output
+	if len(transformedEvent.Data) == 1 {
+		transformedEvent.UnwrapSingleItem = true
 	}
 
 	return transformedEvent
@@ -262,29 +268,48 @@ func HandlePostMessage(w http.ResponseWriter, r *http.Request, appServer *server
 			return
 		}
 
-		// Extract schema and data from Snowplow payload
+		// Extract schema from Snowplow payload
 		schema, schemaOk := payload["schema"].(string)
-		data, dataOk := payload["data"].([]interface{})
-
-		if !schemaOk || !dataOk {
-			http.Error(w, "Missing schema or data field", http.StatusBadRequest)
+		if !schemaOk {
+			http.Error(w, "Missing schema field", http.StatusBadRequest)
 			return
 		}
 
-		// Convert data from []interface{} to []map[string]interface{}
-		var eventData []map[string]interface{}
-		for _, item := range data {
-			if dataMap, ok := item.(map[string]interface{}); ok {
-				eventData = append(eventData, dataMap)
+		// Check if data is an array or a single object
+		dataRaw, dataExists := payload["data"]
+		if !dataExists {
+			http.Error(w, "Missing data field", http.StatusBadRequest)
+			return
+		}
+
+		// Try to handle data as an array first
+		if dataArray, ok := dataRaw.([]interface{}); ok {
+			// Data is an array - send a separate event for each item
+			eventDataList := make([][]map[string]interface{}, 0)
+			for _, item := range dataArray {
+				if dataMap, ok := item.(map[string]interface{}); ok {
+					eventDataList = append(eventDataList, []map[string]interface{}{dataMap})
+				}
 			}
-		}
 
-		if len(eventData) == 0 {
-			http.Error(w, "Invalid data format", http.StatusBadRequest)
+			if len(eventDataList) == 0 {
+				http.Error(w, "Invalid data format", http.StatusBadRequest)
+				return
+			}
+
+			// Send each data item as a separate event with shared timestamp
+			sharedTime := time.Now()
+			for _, eventData := range eventDataList {
+				appServer.AddEventWithTime(schema, eventData, sharedTime)
+			}
+		} else if dataMap, ok := dataRaw.(map[string]interface{}); ok {
+			// Data is a single object - wrap in array and send as single event
+			appServer.AddEvent(schema, []map[string]interface{}{dataMap})
+		} else {
+			http.Error(w, "Invalid data format - must be an object or array", http.StatusBadRequest)
 			return
 		}
 
-		appServer.AddEvent(schema, eventData)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	} else {

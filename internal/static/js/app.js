@@ -33,6 +33,16 @@ function setupSSE() {
     eventSource.onmessage = function(event) {
         try {
             const eventData = JSON.parse(event.data);
+            console.log(eventData);
+
+            // Try to parse field for Payload and Context keys
+            if (eventData.data.Payload) {
+                eventData.data.Payload = JSON.parse(eventData.data.Payload);
+            }
+            if (eventData.data.Context) {
+                eventData.data.Context = JSON.parse(eventData.data.Context);
+            }
+
             addEventToUI(eventData);
         } catch (error) {
             console.error('Error parsing SSE event:', error);
