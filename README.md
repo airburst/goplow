@@ -1,16 +1,18 @@
-# Goplow 📨
+# Goplow �
 
-A single-file Go executable that runs a web server for displaying messages in real-time. The application automatically opens your default browser on startup and serves a beautiful, responsive web interface.
+A single-file Go executable that runs a web server for displaying analytics events in real-time. The application automatically opens your default browser on startup and serves a beautiful, responsive web interface.
 
 ## Features
 
 - ✅ **Single-file executable** - Just one binary to run
 - ✅ **Auto-opens browser** - Launches your default browser automatically
 - ✅ **Web-based UI** - Beautiful, responsive interface
-- ✅ **Real-time updates** - Messages refresh automatically every 2 seconds
+- ✅ **Real-time events** - Analytics events stream in real-time via SSE
+- ✅ **Snowplow-compatible** - Supports Snowplow analytics event format
+- ✅ **Configurable endpoints** - Customize the analytics event endpoint
 - ✅ **Configurable** - Use `config.toml` to customize settings
 - ✅ **Cross-platform** - Works on macOS, Linux, and Windows
-- ✅ **Message storage** - Keeps messages in memory with configurable limit
+- ✅ **Event storage** - Keeps events in memory with configurable limit
 
 ## Quick Start
 
@@ -32,7 +34,7 @@ go build -o goplow ./cmd/server
 The application will:
 1. Start a web server on the configured host and port
 2. Automatically open your default browser
-3. Display a message interface where you can send and view messages
+3. Display an event stream interface for viewing analytics events in real-time
 
 ### Running the Executable
 
@@ -52,39 +54,41 @@ port = 8080
 # Server host to bind to (default: localhost)
 host = "localhost"
 
-# Maximum number of messages to keep in memory (default: 100)
+# Maximum number of events to keep in memory (default: 100)
 max_messages = 100
+
+# API endpoint for ingesting analytics events (default: com.simplybusiness/events)
+# This will be registered as /com.simplybusiness/events
+events_endpoint = "com.simplybusiness/events"
 ```
 
 If `config.toml` doesn't exist, the application uses default values.
 
 ## API Endpoints
 
-### GET `/api/messages`
-Returns all stored messages as JSON.
-
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "text": "Hello world",
-    "timestamp": "2025-10-20T12:34:56Z"
-  },
-  {
-    "id": 2,
-    "text": "Another message",
-    "timestamp": "2025-10-20T12:35:10Z"
-  }
-]
-```
-
-### POST `/api/messages`
-Add a new message.
+### POST `/com.simplybusiness/events` (configurable)
+Ingest analytics events. The path is configurable via `events_endpoint` in `config.toml`.
 
 **Request:**
-- Content-Type: `application/x-www-form-urlencoded`
-- Body: `message=Your message text`
+- Content-Type: `application/json`
+- Body: Snowplow analytics event payload
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:8080/com.simplybusiness/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+    "data": [
+      {
+        "e": "ue",
+        "eid": "6342e43c-3f55-4040-8923-472ac1a66d76",
+        "tv": "js-3.21.0",
+        "tna": "sb-ava"
+      }
+    ]
+  }'
+```
 
 **Response:**
 ```json
@@ -93,22 +97,56 @@ Add a new message.
 }
 ```
 
+### GET `/com.simplybusiness/events/list` (configurable)
+Retrieve all stored events as JSON.
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+    "data": [
+      {
+        "e": "ue",
+        "eid": "6342e43c-3f55-4040-8923-472ac1a66d76"
+      }
+    ],
+    "timestamp": "2025-10-20T12:34:56Z",
+    "receivedAt": "2025-10-20T12:34:56Z"
+  }
+]
+```
+
+### GET `/api/events` (Server-Sent Events)
+Stream new events in real-time via Server-Sent Events. This endpoint is fixed and not configurable.
+
 ### GET `/`
 Returns the HTML interface.
 
 ## Usage Examples
 
-### Sending a Message via cURL
+### Sending an Event via cURL
 
 ```bash
-curl -X POST http://localhost:8080/api/messages \
-  -d "message=Hello from the API"
+curl -X POST http://localhost:8080/com.simplybusiness/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+    "data": [
+      {
+        "e": "ue",
+        "eid": "6342e43c-3f55-4040-8923-472ac1a66d76",
+        "tv": "js-3.21.0"
+      }
+    ]
+  }'
 ```
 
-### Getting Messages
+### Retrieving Events
 
 ```bash
-curl http://localhost:8080/api/messages
+curl http://localhost:8080/com.simplybusiness/events/list
 ```
 
 ### Changing the Port

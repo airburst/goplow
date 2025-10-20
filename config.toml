@@ -1,11 +1,27 @@
 # Goplow Configuration File
 
 [server]
-# Server port number (default: 8080)
-port = 8080
+# Server port number (default: 8000)
+port = 8000
 
 # Server host to bind to (default: localhost)
 host = "localhost"
 
-# Maximum number of messages to keep in memory (default: 100)
-max_messages = 100
+# Maximum number of messages to keep in memory (default: 1000)
+max_messages = 1000
+
+# API endpoint for ingesting analytics events (default: com.simplybusiness/events)
+# This will be registered as /com.simplybusiness/events
+# Examples:
+#   "com.simplybusiness/events" -> /com.simplybusiness/events
+#   "/custom/events" -> /custom/events
+#   "analytics/snowplow" -> /analytics/snowplow
+events_endpoint = "com.simplybusiness/events"
+
+[cors]
+# CORS allowed origins for the events API (comma-separated list)
+# Examples:
+#   "http://localhost:3000"
+#   "http://localhost:3000, http://localhost:8080"
+#   "http://example.com"
+allowed_origins = "http://localhost:3000"

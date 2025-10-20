@@ -15,13 +15,20 @@ import (
 // Config represents the application configuration
 type Config struct {
 	Server ServerConfig `toml:"server"`
+	CORS   CORSConfig   `toml:"cors"`
 }
 
 // ServerConfig represents server-related configuration
 type ServerConfig struct {
-	Port    int    `toml:"port"`
-	Host    string `toml:"host"`
-	MaxMsgs int    `toml:"max_messages"`
+	Port           int    `toml:"port"`
+	Host           string `toml:"host"`
+	MaxMsgs        int    `toml:"max_messages"`
+	EventsEndpoint string `toml:"events_endpoint"`
+}
+
+// CORSConfig represents CORS-related configuration
+type CORSConfig struct {
+	AllowedOrigins string `toml:"allowed_origins"`
 }
 
 // Event represents an analytics event with Snowplow schema structure
@@ -55,9 +62,13 @@ type AppServer struct {
 func LoadConfig(filepath string) (Config, error) {
 	config := Config{
 		Server: ServerConfig{
-			Port:    8080,
-			Host:    "localhost",
-			MaxMsgs: 100,
+			Port:           8080,
+			Host:           "localhost",
+			MaxMsgs:        100,
+			EventsEndpoint: "com.simplybusiness/events",
+		},
+		CORS: CORSConfig{
+			AllowedOrigins: "http://localhost:3000",
 		},
 	}
 
@@ -108,15 +119,6 @@ func (s *AppServer) AddEvent(schema string, data []map[string]interface{}) {
 	go s.broadcastNewEvent(event)
 }
 
-// AddMessage adds a new message (deprecated - use AddEvent instead)
-func (s *AppServer) AddMessage(text string) {
-	s.AddEvent("com.text.message", []map[string]interface{}{
-		{
-			"text": text,
-		},
-	})
-}
-
 // GetEvents returns all analytics events
 func (s *AppServer) GetEvents() []Event {
 	s.mutex.RLock()
@@ -126,11 +128,6 @@ func (s *AppServer) GetEvents() []Event {
 	evts := make([]Event, len(s.events))
 	copy(evts, s.events)
 	return evts
-}
-
-// GetMessages returns all events (deprecated - use GetEvents instead)
-func (s *AppServer) GetMessages() []Event {
-	return s.GetEvents()
 }
 
 // GetConfig returns the server configuration
@@ -146,6 +143,24 @@ func (s *AppServer) GetAddr() string {
 // GetURL returns the full URL for the server
 func (s *AppServer) GetURL() string {
 	return fmt.Sprintf("http://%s:%d", s.config.Server.Host, s.config.Server.Port)
+}
+
+// GetEventsEndpoint returns the configured events endpoint path
+func (s *AppServer) GetEventsEndpoint() string {
+	endpoint := s.config.Server.EventsEndpoint
+	if endpoint == "" {
+		endpoint = "com.simplybusiness/events"
+	}
+	// Ensure endpoint starts with /
+	if len(endpoint) > 0 && endpoint[0] != '/' {
+		endpoint = "/" + endpoint
+	}
+	return endpoint
+}
+
+// GetCORSAllowedOrigins returns the configured CORS allowed origins
+func (s *AppServer) GetCORSAllowedOrigins() string {
+	return s.config.CORS.AllowedOrigins
 }
 
 // AddSSEClient adds a new SSE client
@@ -216,9 +231,4 @@ func (s *AppServer) SendEventToClient(client *SSEClient, event Event) error {
 
 	client.Flusher.Flush()
 	return nil
-}
-
-// SendMessageToClient sends a single message to an SSE client (deprecated)
-func (s *AppServer) SendMessageToClient(client *SSEClient, msg Event) error {
-	return s.SendEventToClient(client, msg)
 }

@@ -13,6 +13,37 @@ import (
 // RegisterRoutes registers all HTTP routes
 func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 	mux.HandleFunc("/", HandleIndex)
+
+	// Get the configured events endpoint
+	eventsEndpoint := appServer.GetEventsEndpoint()
+
+	// Register the events endpoint (for ingesting analytics events) with CORS
+	mux.HandleFunc(eventsEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		// Apply CORS headers from config
+		ApplyCORSHeaders(w, appServer)
+
+		switch r.Method {
+		case http.MethodPost, http.MethodOptions:
+			HandlePostMessage(w, r, appServer)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Register GET endpoint for retrieving events with CORS
+	mux.HandleFunc(eventsEndpoint+"/list", func(w http.ResponseWriter, r *http.Request) {
+		// Apply CORS headers from config
+		ApplyCORSHeaders(w, appServer)
+
+		switch r.Method {
+		case http.MethodGet:
+			HandleGetMessages(w, r, appServer)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Legacy endpoint for backward compatibility
 	mux.HandleFunc("/api/messages", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -23,9 +54,21 @@ func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// SSE endpoint remains fixed (no CORS)
 	mux.HandleFunc("/api/events", func(w http.ResponseWriter, r *http.Request) {
 		HandleSSE(w, r, appServer)
 	})
+}
+
+// ApplyCORSHeaders applies CORS headers from config to the response
+func ApplyCORSHeaders(w http.ResponseWriter, appServer *server.AppServer) {
+	corsOrigins := appServer.GetCORSAllowedOrigins()
+	if corsOrigins != "" {
+		w.Header().Set("Access-Control-Allow-Origin", corsOrigins)
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	}
 }
 
 // HandleIndex serves the main HTML page
@@ -40,6 +83,12 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 // HandlePostMessage handles incoming POST requests with analytics events
 func HandlePostMessage(w http.ResponseWriter, r *http.Request, appServer *server.AppServer) {
+	// Handle preflight OPTIONS request
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	// Accept both form data (for backward compatibility) and JSON
 	contentType := r.Header.Get("Content-Type")
 
@@ -86,7 +135,12 @@ func HandlePostMessage(w http.ResponseWriter, r *http.Request, appServer *server
 			return
 		}
 
-		appServer.AddMessage(message)
+		// For legacy form data, create a simple event
+		appServer.AddEvent("form/message", []map[string]interface{}{
+			{
+				"message": message,
+			},
+		})
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	}
@@ -94,7 +148,7 @@ func HandlePostMessage(w http.ResponseWriter, r *http.Request, appServer *server
 
 // HandleGetMessages returns all events as JSON
 func HandleGetMessages(w http.ResponseWriter, r *http.Request, appServer *server.AppServer) {
-	events := appServer.GetMessages()
+	events := appServer.GetEvents()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(events)
 }
@@ -105,7 +159,7 @@ func HandleSSE(w http.ResponseWriter, r *http.Request, appServer *server.AppServ
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// Note: No CORS headers on SSE endpoint
 
 	// Generate client ID
 	clientID := fmt.Sprintf("client_%d", time.Now().UnixNano())
