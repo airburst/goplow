@@ -1,4 +1,3 @@
-const messageInput = document.getElementById('messageInput');
 const messagesContainer = document.getElementById('messagesContainer');
 const loadingIndicator = document.getElementById('loading');
 
@@ -8,13 +7,6 @@ let events = [];
 
 // Initialize the application
 initializeApp();
-
-// Allow Enter key to send message
-messageInput.addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
-});
 
 function initializeApp() {
     // Load initial messages
@@ -63,44 +55,6 @@ function setupSSE() {
     };
 }
 
-async function sendMessage() {
-    const payload = messageInput.value.trim();
-    if (!payload) return;
-
-    loadingIndicator.classList.add('active');
-
-    try {
-        // Try to parse as JSON first
-        let jsonPayload;
-        try {
-            jsonPayload = JSON.parse(payload);
-        } catch (e) {
-            // If not valid JSON, create a simple text event
-            jsonPayload = {
-                schema: "com.text.message",
-                data: [{ text: payload }]
-            };
-        }
-
-        const response = await fetch('/api/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(jsonPayload)
-        });
-
-        if (response.ok) {
-            messageInput.value = '';
-            // No need to call loadMessages() - SSE will handle the update
-        }
-    } catch (error) {
-        console.error('Error sending event:', error);
-    } finally {
-        loadingIndicator.classList.remove('active');
-    }
-}
-
 async function loadMessages() {
     try {
         const response = await fetch('/api/messages');
@@ -147,7 +101,7 @@ function renderMessages() {
             <div class="message">
                 <div class="message-header">
                     <span class="event-id">#${evt.id}</span>
-                    <span class="event-schema">${escapeHtml(evt.schema)}</span>
+                    <span class="event-title">${evt.data.Title}</span>
                     <span class="event-time">${timeStr}</span>
                 </div>
                 <div class="message-text">
