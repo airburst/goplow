@@ -84,7 +84,9 @@ func decodeEvent(value interface{}) string {
 	if str, ok := value.(string); ok {
 		decoded, err := utils.DecodeBase64(str)
 		if err != nil {
-			return fmt.Sprintf("Error decoding: %v", err)
+			// If decoding fails, return the original value
+			// This could happen if the value is not actually base64 encoded
+			return str
 		}
 		return decoded
 	}
