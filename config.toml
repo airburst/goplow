@@ -1,0 +1,11 @@
+# Goplow Configuration File
+
+[server]
+# Server port number (default: 8080)
+port = 8080
+
+# Server host to bind to (default: localhost)
+host = "localhost"
+
+# Maximum number of messages to keep in memory (default: 100)
+max_messages = 100
