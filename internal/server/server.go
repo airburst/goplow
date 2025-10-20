@@ -50,12 +50,13 @@ type SSEClient struct {
 
 // AppServer handles the web server and analytics event management
 type AppServer struct {
-	config     Config
-	events     []Event
-	mutex      sync.RWMutex
-	eventID    int
-	sseClients map[string]*SSEClient
-	sseMutex   sync.RWMutex
+	config      Config
+	events      []Event
+	mutex       sync.RWMutex
+	eventID     int
+	sseClients  map[string]*SSEClient
+	sseMutex    sync.RWMutex
+	transformer func(Event) Event
 }
 
 // LoadConfig loads the configuration from a TOML file
@@ -163,6 +164,11 @@ func (s *AppServer) GetCORSAllowedOrigins() string {
 	return s.config.CORS.AllowedOrigins
 }
 
+// SetEventTransformer sets a function to transform events for display
+func (s *AppServer) SetEventTransformer(transformer func(Event) Event) {
+	s.transformer = transformer
+}
+
 // AddSSEClient adds a new SSE client
 func (s *AppServer) AddSSEClient(clientID string, w http.ResponseWriter) *SSEClient {
 	s.sseMutex.Lock()
@@ -200,6 +206,12 @@ func (s *AppServer) broadcastNewEvent(event Event) {
 	s.sseMutex.RLock()
 	defer s.sseMutex.RUnlock()
 
+	// Apply transformer if available
+	eventToSend := event
+	if s.transformer != nil {
+		eventToSend = s.transformer(event)
+	}
+
 	for clientID, client := range s.sseClients {
 		select {
 		case <-client.Done:
@@ -207,7 +219,7 @@ func (s *AppServer) broadcastNewEvent(event Event) {
 			continue
 		default:
 			// Send the event to the client
-			if err := s.SendEventToClient(client, event); err != nil {
+			if err := s.SendEventToClient(client, eventToSend); err != nil {
 				log.Printf("Error sending event to client %s: %v", clientID, err)
 				// Remove client on error
 				go s.RemoveSSEClient(clientID)
@@ -220,6 +232,27 @@ func (s *AppServer) broadcastNewEvent(event Event) {
 func (s *AppServer) SendEventToClient(client *SSEClient, event Event) error {
 	// Marshal event to JSON
 	eventJSON, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	// Write SSE format
+	if _, err := fmt.Fprintf(client.Writer, "data: %s\n\n", string(eventJSON)); err != nil {
+		return err
+	}
+
+	client.Flusher.Flush()
+	return nil
+}
+
+// SendTransformedEventToClient sends a transformed event to an SSE client
+// The transformer function is called to transform the event data
+func (s *AppServer) SendTransformedEventToClient(client *SSEClient, event Event, transformer func(Event) Event) error {
+	// Transform the event
+	transformedEvent := transformer(event)
+
+	// Marshal event to JSON
+	eventJSON, err := json.Marshal(transformedEvent)
 	if err != nil {
 		return err
 	}

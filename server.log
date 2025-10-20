@@ -1,2 +1,5 @@
 2025/10/20 18:07:34 Starting server on localhost:8000
 2025/10/20 18:07:34 Opening browser to http://localhost:8000
+2025/10/20 20:20:40 
+Shutdown signal received, gracefully stopping server...
+2025/10/20 20:20:40 Server stopped

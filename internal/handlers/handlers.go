@@ -8,10 +8,14 @@ import (
 
 	"goplow/internal/server"
 	"goplow/internal/static"
+	"goplow/internal/utils"
 )
 
 // RegisterRoutes registers all HTTP routes
 func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
+	// Set the event transformer for SSE broadcast
+	appServer.SetEventTransformer(transformEventForDisplay)
+
 	mux.HandleFunc("/", HandleIndex)
 
 	// Get the configured events endpoint
@@ -69,6 +73,162 @@ func ApplyCORSHeaders(w http.ResponseWriter, appServer *server.AppServer) {
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	}
+}
+
+// decodeEvent decodes a base64-encoded event string using the utils.DecodeBase64 function
+func decodeEvent(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+
+	if str, ok := value.(string); ok {
+		decoded, err := utils.DecodeBase64(str)
+		if err != nil {
+			return fmt.Sprintf("Error decoding: %v", err)
+		}
+		return decoded
+	}
+
+	return fmt.Sprintf("%v", value)
+}
+
+// transformEvent transforms an event based on its "e" key type
+func transformEvent(eventData map[string]interface{}) map[string]interface{} {
+	eventType, ok := eventData["e"].(string)
+	if !ok {
+		// If no "e" key, return as-is
+		return eventData
+	}
+
+	switch eventType {
+	case "pv":
+		return transformPageView(eventData)
+	case "se":
+		return transformStructuredEvent(eventData)
+	case "ue":
+		return transformUnstructuredEvent(eventData)
+	default:
+		// For unknown event types, return as-is
+		return eventData
+	}
+}
+
+// transformPageView transforms a Page View event
+func transformPageView(data map[string]interface{}) map[string]interface{} {
+	result := map[string]interface{}{
+		"title": "Page View",
+	}
+
+	if v, ok := data["url"]; ok {
+		result["Url"] = v
+	}
+	if v, ok := data["page"]; ok {
+		result["Page"] = v
+	}
+	if v, ok := data["refr"]; ok {
+		result["Referrer"] = v
+	}
+	if v, ok := data["tna"]; ok {
+		result["Tracker"] = v
+	}
+	if v, ok := data["aid"]; ok {
+		result["App ID"] = v
+	}
+	if v, ok := data["duid"]; ok {
+		result["Device Id"] = v
+	}
+	if v, ok := data["cx"]; ok {
+		result["Context"] = decodeEvent(v)
+	}
+
+	return result
+}
+
+// transformStructuredEvent transforms a Structured Event
+func transformStructuredEvent(data map[string]interface{}) map[string]interface{} {
+	result := map[string]interface{}{
+		"title": "Structured Event",
+	}
+
+	if v, ok := data["se_ca"]; ok {
+		result["Category"] = v
+	}
+	if v, ok := data["se_ac"]; ok {
+		result["Action"] = v
+	}
+	if v, ok := data["se_la"]; ok {
+		result["Label"] = v
+	}
+	if v, ok := data["se_pr"]; ok {
+		if v != nil {
+			result["Property"] = v
+		} else {
+			result["Property"] = "N/A"
+		}
+	} else {
+		result["Property"] = "N/A"
+	}
+	if v, ok := data["se_va"]; ok {
+		if v != nil {
+			result["Value"] = v
+		} else {
+			result["Value"] = "N/A"
+		}
+	} else {
+		result["Value"] = "N/A"
+	}
+	if v, ok := data["url"]; ok {
+		result["Url"] = v
+	}
+	if v, ok := data["aid"]; ok {
+		result["App ID"] = v
+	}
+	if v, ok := data["duid"]; ok {
+		result["Device Id"] = v
+	}
+	if v, ok := data["cx"]; ok {
+		result["Context"] = decodeEvent(v)
+	}
+
+	return result
+}
+
+// transformUnstructuredEvent transforms an Unstructured (Self-Describing) Event
+func transformUnstructuredEvent(data map[string]interface{}) map[string]interface{} {
+	result := map[string]interface{}{
+		"title": "Self-Describing Event",
+	}
+
+	if v, ok := data["url"]; ok {
+		result["Url"] = v
+	}
+	if v, ok := data["ue_px"]; ok {
+		result["Payload"] = decodeEvent(v)
+	}
+	if v, ok := data["aid"]; ok {
+		result["App ID"] = v
+	}
+	if v, ok := data["duid"]; ok {
+		result["Device Id"] = v
+	}
+	if v, ok := data["cx"]; ok {
+		result["Context"] = decodeEvent(v)
+	}
+
+	return result
+}
+
+// transformEventForDisplay transforms an entire Event for display via SSE
+// This transforms each data item in the event based on the event type
+func transformEventForDisplay(event server.Event) server.Event {
+	transformedEvent := event
+	transformedEvent.Data = make([]map[string]interface{}, len(event.Data))
+
+	for i, dataItem := range event.Data {
+		transformedEvent.Data[i] = transformEvent(dataItem)
+	}
+
+	return transformedEvent
 }
 
 // HandleIndex serves the main HTML page
