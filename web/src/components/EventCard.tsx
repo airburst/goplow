@@ -1,16 +1,76 @@
 import type { Component } from 'solid-js';
+import { createSignal } from 'solid-js';
 
 const EventCard: Component<{ kind: string; event: string }> = (props) => {
+  const [isOpen, setIsOpen] = createSignal(false);
   const parsedEvent = JSON.parse(props.event);
 
+  // Determine success status (TODO: customize this logic)
+  const isSuccess = true;
+  const statusColor = isSuccess ? 'bg-green-500' : 'bg-red-500';
+
   return (
-    <div class="bg-neutral-800 text-white p-6 rounded-lg shadow-lg border border-neutral-600">
-      <h2 class="text-white mb-3">{props.kind}</h2>
-      <div class="bg-neutral-800 p-4 rounded-md border border-neutral-700">
-        <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words">{JSON.stringify(parsedEvent, null, 2)}</pre>
+    <div
+      class="bg-neutral-800 text-white rounded-lg shadow-lg border border-neutral-600 overflow-hidden transition-all duration-100"
+      classList={{
+        'mb-2': true,
+      }}
+    >
+      {/* Accordion Header */}
+      <button
+        onClick={() => setIsOpen(!isOpen())}
+        class="w-full flex items-center gap-4 p-4 hover:bg-neutral-700 transition-colors duration-100 cursor-pointer"
+      >
+        {/* Status Badge */}
+        <div
+          class={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${statusColor}`}
+        >
+          {props.kind.charAt(0).toUpperCase()}
+        </div>
+
+        {/* Kind Text */}
+        <span class="flex-grow text-left font-semibold">{props.kind}</span>
+
+        {/* Chevron Icon */}
+        <div
+          class="transition-transform duration-100 flex-shrink-0"
+          classList={{
+            'rotate-90': isOpen(),
+          }}
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </div>
+      </button>
+
+      {/* Accordion Content */}
+      <div
+        class="transition-all duration-100 overflow-hidden"
+        classList={{
+          'max-h-96': isOpen(),
+          'max-h-0': !isOpen(),
+        }}
+      >
+        <div class="bg-neutral-900 p-4 border-t border-neutral-700">
+          <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words">
+            {JSON.stringify(parsedEvent, null, 2)}
+          </pre>
+        </div>
       </div>
     </div>
   );
 };
 
 export default EventCard;
+
