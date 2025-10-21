@@ -1,9 +1,11 @@
 const messagesContainer = document.getElementById('messagesContainer');
-const loadingIndicator = document.getElementById('loading');
+const searchInput = document.getElementById('searchInput');
+const statusText = document.getElementById('statusText');
 
 // Initialize SSE connection for real-time updates
 let eventSource = null;
 let events = [];
+let filteredEvents = [];
 
 // Initialize the application
 initializeApp();
@@ -13,6 +15,27 @@ function initializeApp() {
     loadMessages();
     // Setup SSE connection
     setupSSE();
+    // Setup search functionality
+    setupSearch();
+}
+
+function setupSearch() {
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        if (query === '') {
+            filteredEvents = [...events];
+        } else {
+            filteredEvents = events.filter(evt => {
+                const title = evt.data.Title || '';
+                const eventType = evt.data.EventType || '';
+                const dataStr = JSON.stringify(evt.data).toLowerCase();
+                return title.toLowerCase().includes(query) ||
+                       eventType.toLowerCase().includes(query) ||
+                       dataStr.includes(query);
+            });
+        }
+        renderMessages();
+    });
 }
 
 function setupSSE() {
@@ -43,6 +66,8 @@ function setupSSE() {
 
     eventSource.onerror = function(error) {
         console.error('SSE connection error:', error);
+        statusText.textContent = 'Disconnected';
+        statusText.parentElement.classList.add('disconnected');
         // Attempt to reconnect after 5 seconds
         setTimeout(() => {
             console.log('Attempting to reconnect SSE...');
@@ -52,6 +77,8 @@ function setupSSE() {
 
     eventSource.onopen = function() {
         console.log('SSE connection established');
+        statusText.textContent = 'Connected';
+        statusText.parentElement.classList.remove('disconnected');
     };
 }
 
@@ -61,6 +88,7 @@ async function loadMessages() {
         const fetchedEvents = await response.json();
 
         events = fetchedEvents || [];
+        filteredEvents = [...events];
         renderMessages();
     } catch (error) {
         console.error('Error loading events:', error);
@@ -70,13 +98,16 @@ async function loadMessages() {
 function addEventToUI(newEvent) {
     // Check if event already exists (to avoid duplicates)
     if (!events.find(evt => evt.id === newEvent.id)) {
-        events.push(newEvent);
+        events.unshift(newEvent);
+        filteredEvents = [...events];
         renderMessages();
     }
 }
 
 function renderMessages() {
-    if (!events || events.length === 0) {
+    const displayEvents = filteredEvents.length > 0 ? filteredEvents : events;
+
+    if (!displayEvents || displayEvents.length === 0) {
         messagesContainer.innerHTML = `
             <div class="empty-state">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,20 +119,16 @@ function renderMessages() {
         return;
     }
 
-    messagesContainer.innerHTML = events.map(evt => {
+    messagesContainer.innerHTML = displayEvents.map((evt, index) => {
         const date = new Date(evt.timestamp);
         const timeStr = date.toLocaleTimeString();
-
-        // Extract meaningful data from the event
-        const dataPreview = evt.data && evt.data.length > 0
-            ? JSON.stringify(evt.data[0]).substring(0, 100)
-            : 'N/A';
+        const eventNumber = events.indexOf(evt) + 1;
 
         return `
             <div class="message">
                 <div class="message-header">
-                    <span class="event-id">#${evt.id}</span>
-                    <span class="event-title">${evt.data.Title}</span>
+                    <span class="event-id">${eventNumber}</span>
+                    <span class="event-title">${evt.data.Title || 'Event'}</span>
                     <span class="event-time">${timeStr}</span>
                 </div>
                 <div class="message-text">

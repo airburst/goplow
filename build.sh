@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go clean -cache && go build -o goplow ./cmd/server/
+go clean -cache && go build -o goplow ./cmd/server/main.go
