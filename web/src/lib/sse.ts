@@ -26,6 +26,9 @@ export function createSSESubscription(endpoint: string = '/api/events'): SSESubs
 
   let eventSource: EventSource | null = null;
   let eventCounter = 0;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_TIMEOUT = 3000; // 3 seconds
 
   const connect = () => {
     if (eventSource) {
@@ -35,6 +38,10 @@ export function createSSESubscription(endpoint: string = '/api/events'): SSESubs
     try {
       setError(null);
       eventSource = new EventSource(endpoint);
+
+      // Set connected immediately when EventSource is created
+      setIsConnected(true);
+      reconnectAttempts = 0;
 
       // Handle incoming SSE messages
       eventSource.addEventListener('message', (e) => {
@@ -51,38 +58,56 @@ export function createSSESubscription(endpoint: string = '/api/events'): SSESubs
 
           // Add to the events array (prepend for newest first)
           setEvents((prev) => [newEvent, ...prev]);
+
+          // Clear reconnect attempts on successful message
+          reconnectAttempts = 0;
         } catch (err) {
           console.error('Error parsing SSE message:', err);
           setError(`Failed to parse event: ${err instanceof Error ? err.message : String(err)}`);
         }
       });
 
-      // Handle connection open
+      // Handle connection open (for confirmation)
       eventSource.addEventListener('open', () => {
         setIsConnected(true);
         setError(null);
+        reconnectAttempts = 0;
         console.log('SSE connection established');
       });
 
       // Handle errors
       eventSource.addEventListener('error', () => {
+        const readyState = eventSource?.readyState;
         setIsConnected(false);
-        setError('Connection lost. Attempting to reconnect...');
-        console.error('SSE connection error');
+        reconnectAttempts++;
+
+        if (readyState === EventSource.CLOSED) {
+          setError('Connection closed. Server may be unavailable.');
+        } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          setError('Connection failed. Unable to reach server.');
+          // Close the connection to stop retry attempts
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        } else if (readyState === EventSource.CONNECTING) {
+          setError(`Reconnecting... (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+        } else {
+          setError(`Connection error. Reconnecting... (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+        }
+        console.error('SSE connection error, readyState:', readyState, 'attempts:', reconnectAttempts);
       });
 
       // Fallback error handler
       eventSource.onerror = () => {
         setIsConnected(false);
-        setError('Failed to connect to event stream');
+        setError('Failed to maintain connection to event stream');
       };
     } catch (err) {
       setError(`Failed to connect: ${err instanceof Error ? err.message : String(err)}`);
       setIsConnected(false);
     }
-  };
-
-  const disconnect = () => {
+  };  const disconnect = () => {
     if (eventSource) {
       eventSource.close();
       eventSource = null;
