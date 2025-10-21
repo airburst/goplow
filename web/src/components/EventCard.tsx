@@ -12,6 +12,10 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
   return (
     <div
       class="bg-neutral-800 text-white rounded-lg shadow-lg border border-neutral-600 overflow-hidden transition-all duration-100"
+      style={{
+        "view-transition-name": "event-card",
+        "animation": "slideInFromTop 0.3s ease-out"
+      }}
       classList={{
         'mb-2': true,
       }}

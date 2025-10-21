@@ -1,1 +1,19 @@
 @import 'tailwindcss';
+
+/* Keyframe animations */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Only the first (newest) card slides in */
+.event-card-wrapper:first-child {
+  animation: slideInFromTop 0.3s ease-out;
+}
