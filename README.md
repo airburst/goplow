@@ -36,6 +36,62 @@ The application will:
 2. Automatically open your default browser
 3. Display an event stream interface for viewing analytics events in real-time
 
+## Building the Web Interface
+
+The web interface is built using SolidJS and is located in the `web/` directory. The build process compiles the SolidJS application and places the static assets directly into the Go application for embedding.
+
+### Prerequisites
+
+Ensure you have Node.js and pnpm installed:
+```bash
+# Install pnpm if you haven't already
+npm install -g pnpm
+```
+
+### Building the Web Interface
+
+```bash
+# Navigate to the web directory
+cd web
+
+# Install dependencies
+pnpm install
+
+# Build the SolidJS application
+pnpm build
+```
+
+The build process will:
+- Compile the SolidJS application
+- Generate optimized JavaScript and CSS bundles
+- Output the built files to `../internal/static/` (preserving the `static.go` file)
+- Create an `assets/` directory with versioned JS/CSS files
+
+### Development Mode
+
+For development with hot reloading:
+```bash
+# In the web directory
+pnpm dev
+```
+
+This will start the Vite development server on `http://localhost:3000`.
+
+### Build Configuration
+
+The build is configured in `web/vite.config.ts`:
+- **Output Directory**: `../internal/static` - Built files go directly to the Go static directory
+- **Empty Directory**: `false` - Preserves the `static.go` file during builds
+- **Target**: `esnext` - Modern JavaScript for optimal performance
+
+After building the web interface, rebuild the Go application to embed the new static files:
+```bash
+# From the project root
+make build
+# or
+go build -o goplow ./cmd/server
+```
+
 ### Running the Executable
 
 ```bash
@@ -178,12 +234,20 @@ goplow/
 │   ├── server/              # Core server logic and models
 │   │   └── server.go
 │   └── static/              # Embedded static files (HTML, CSS, JS)
-│       ├── index.html
-│       ├── css/
-│       │   └── style.css
-│       ├── js/
-│       │   └── app.js
+│       ├── index.html       # SolidJS built HTML
+│       ├── assets/          # SolidJS built assets (JS, CSS)
+│       ├── css/             # Legacy CSS files
+│       ├── js/              # Legacy JS files
 │       └── static.go        # Static file serving
+├── web/                     # SolidJS web application source
+│   ├── src/                 # SolidJS source files
+│   │   ├── App.tsx
+│   │   ├── index.tsx
+│   │   └── index.css
+│   ├── package.json         # Node.js dependencies
+│   ├── pnpm-lock.yaml       # pnpm lockfile
+│   ├── vite.config.ts       # Vite build configuration
+│   └── tsconfig.json        # TypeScript configuration
 ├── pkg/
 │   └── browser/             # Cross-platform browser opening
 │       └── browser.go
