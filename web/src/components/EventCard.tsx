@@ -23,9 +23,8 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       >
         {/* Status Badge */}
         <div
-          class={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${statusColor}`}
+          class={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${statusColor}`}
         >
-          {props.kind.charAt(0).toUpperCase()}
         </div>
 
         {/* Kind Text */}

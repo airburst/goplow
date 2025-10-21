@@ -77,20 +77,88 @@ pnpm dev
 
 This will start the Vite development server on `http://localhost:3000`.
 
+### Development Workflow (Full Stack)
+
+To work on both frontend and backend with hot reloading, use development mode:
+
+#### Option 1: Using the dev script (Recommended)
+```bash
+# From the project root
+./dev.sh
+```
+
+This will:
+- Start the Go server with development mode enabled
+- Start pnpm dev for frontend hot reloading
+- Serve assets from `internal/static-dev` instead of embedded assets
+- Both processes run in parallel with automatic cleanup on Ctrl+C
+
+#### Option 2: Using Make targets
+
+In separate terminals:
+```bash
+# Terminal 1: Start Go server in dev mode
+make dev-server
+```
+
+```bash
+# Terminal 2: Start frontend dev server
+make dev-web
+```
+
+#### Option 3: Manual commands
+
+In separate terminals:
+```bash
+# Terminal 1: Go server
+GOPLOW_DEV_MODE=true GOPLOW_DEV_ASSETS_PATH=./internal/static-dev go run ./cmd/server/main.go
+```
+
+```bash
+# Terminal 2: Frontend
+cd web
+DEV=true pnpm dev
+```
+
+#### How It Works
+
+In development mode:
+1. **Go Server** runs with `GOPLOW_DEV_MODE=true` which:
+   - Serves HTML and assets from `internal/static-dev` instead of embedded files
+   - Allows real-time updates without rebuilding the Go binary
+   - Allows hot reloading of the frontend
+
+2. **Pnpm Dev** runs with `DEV=true` which:
+   - Outputs built assets to `internal/static-dev/` (the dev folder)
+   - Runs the Vite dev server on port 3000
+   - Provides hot module reloading for frontend changes
+
+3. **Access** the application at:
+   - Frontend with hot reloading: `http://localhost:3000`
+   - Full app with Go backend: `http://localhost:8000`
+
+#### Building for Production
+
+After development, build the production-ready assets:
+```bash
+# Build frontend assets to internal/static (production folder)
+cd web
+pnpm build
+
+# Build Go binary with embedded assets
+make build
+
+# Run the production binary
+./goplow
+```
+
 ### Build Configuration
 
 The build is configured in `web/vite.config.ts`:
-- **Output Directory**: `../internal/static` - Built files go directly to the Go static directory
+- **Output Directory (Dev)**: `../internal/static-dev` - When DEV=true
+- **Output Directory (Prod)**: `../internal/static` - Default (embedded in binary)
 - **Empty Directory**: `false` - Preserves the `static.go` file during builds
 - **Target**: `esnext` - Modern JavaScript for optimal performance
-
-After building the web interface, rebuild the Go application to embed the new static files:
-```bash
-# From the project root
-make build
-# or
-go build -o goplow ./cmd/server
-```
 
 ### Running the Executable
 

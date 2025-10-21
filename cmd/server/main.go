@@ -41,13 +41,18 @@ func main() {
 	log.Printf("Starting server on %s\n", addr)
 	log.Printf("Opening browser to %s\n", url)
 
-	// Open browser in a goroutine to avoid blocking
-	go func() {
-		time.Sleep(500 * time.Millisecond)
-		if err := browser.Open(url); err != nil {
-			log.Printf("Failed to open browser: %v\n", err)
-		}
-	}()
+	// Only open browser if not in dev mode (in dev mode, Vite dev server will open)
+	if os.Getenv("GOPLOW_DEV_MODE") != "true" {
+		// Open browser in a goroutine to avoid blocking
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			if err := browser.Open(url); err != nil {
+				log.Printf("Failed to open browser: %v\n", err)
+			}
+		}()
+	} else {
+		log.Printf("Dev mode: Browser opening handled by Vite dev server\n")
+	}
 
 	// Create HTTP server
 	httpServer := &http.Server{

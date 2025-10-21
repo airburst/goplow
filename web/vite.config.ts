@@ -7,10 +7,18 @@ export default defineConfig({
   plugins: [devtools(), solidPlugin(), tailwindcss()],
   server: {
     port: 3000,
+    proxy: {
+      // Proxy API requests to the Go server (dev mode only)
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     target: "esnext",
-    outDir: "../internal/static",
+    // Use dev output path if DEV environment variable is set, otherwise use production path
+    outDir: process.env.DEV ? "../internal/static-dev" : "../internal/static",
     emptyOutDir: false,
   },
 });
