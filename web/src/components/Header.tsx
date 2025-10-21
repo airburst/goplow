@@ -1,6 +1,6 @@
-import type { Component } from 'solid-js';
-import type { SSESubscription } from '../lib/sse';
-import Connection from './Connection';
+import type { Component } from "solid-js";
+import type { SSESubscription } from "../lib/sse";
+import Connection from "./Connection";
 
 const Header: Component<{ subscription?: SSESubscription }> = (props) => {
   return (

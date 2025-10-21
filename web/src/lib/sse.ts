@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js';
+import { createSignal, createEffect } from "solid-js";
 
 export interface SSEEvent {
   id: string;
@@ -19,7 +19,9 @@ export interface SSESubscription {
  * Create an SSE subscription to the /api/events endpoint
  * Returns a reactive subscription object with event stream and connection status
  */
-export function createSSESubscription(endpoint: string = '/api/events'): SSESubscription {
+export function createSSESubscription(
+  endpoint: string = "/api/events"
+): SSESubscription {
   const [events, setEvents] = createSignal<SSEEvent[]>([]);
   const [isConnected, setIsConnected] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
@@ -44,14 +46,14 @@ export function createSSESubscription(endpoint: string = '/api/events'): SSESubs
       reconnectAttempts = 0;
 
       // Handle incoming SSE messages
-      eventSource.addEventListener('message', (e) => {
+      eventSource.addEventListener("message", (e) => {
         try {
           const data = JSON.parse(e.data);
 
           // Create a new event object
           const newEvent: SSEEvent = {
             id: `event-${++eventCounter}`,
-            kind: data.schema || 'unknown',
+            kind: data.schema || "unknown",
             event: JSON.stringify(data),
             timestamp: Date.now(),
           };
@@ -62,52 +64,68 @@ export function createSSESubscription(endpoint: string = '/api/events'): SSESubs
           // Clear reconnect attempts on successful message
           reconnectAttempts = 0;
         } catch (err) {
-          console.error('Error parsing SSE message:', err);
-          setError(`Failed to parse event: ${err instanceof Error ? err.message : String(err)}`);
+          console.error("Error parsing SSE message:", err);
+          setError(
+            `Failed to parse event: ${
+              err instanceof Error ? err.message : String(err)
+            }`
+          );
         }
       });
 
       // Handle connection open (for confirmation)
-      eventSource.addEventListener('open', () => {
+      eventSource.addEventListener("open", () => {
         setIsConnected(true);
         setError(null);
         reconnectAttempts = 0;
-        console.log('SSE connection established');
+        console.log("SSE connection established");
       });
 
       // Handle errors
-      eventSource.addEventListener('error', () => {
+      eventSource.addEventListener("error", () => {
         const readyState = eventSource?.readyState;
         setIsConnected(false);
         reconnectAttempts++;
 
         if (readyState === EventSource.CLOSED) {
-          setError('Connection closed. Server may be unavailable.');
+          setError("Connection closed. Server may be unavailable.");
         } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-          setError('Connection failed. Unable to reach server.');
+          setError("Connection failed. Unable to reach server.");
           // Close the connection to stop retry attempts
           if (eventSource) {
             eventSource.close();
             eventSource = null;
           }
         } else if (readyState === EventSource.CONNECTING) {
-          setError(`Reconnecting... (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+          setError(
+            `Reconnecting... (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+          );
         } else {
-          setError(`Connection error. Reconnecting... (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+          setError(
+            `Connection error. Reconnecting... (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+          );
         }
-        console.error('SSE connection error, readyState:', readyState, 'attempts:', reconnectAttempts);
+        console.error(
+          "SSE connection error, readyState:",
+          readyState,
+          "attempts:",
+          reconnectAttempts
+        );
       });
 
       // Fallback error handler
       eventSource.onerror = () => {
         setIsConnected(false);
-        setError('Failed to maintain connection to event stream');
+        setError("Failed to maintain connection to event stream");
       };
     } catch (err) {
-      setError(`Failed to connect: ${err instanceof Error ? err.message : String(err)}`);
+      setError(
+        `Failed to connect: ${err instanceof Error ? err.message : String(err)}`
+      );
       setIsConnected(false);
     }
-  };  const disconnect = () => {
+  };
+  const disconnect = () => {
     if (eventSource) {
       eventSource.close();
       eventSource = null;
@@ -140,5 +158,5 @@ export function createSSESubscription(endpoint: string = '/api/events'): SSESubs
 export function clearEvents(subscription: SSESubscription): void {
   // Since events is a getter, we need to update via a new reference
   // This is a helper for the component to call if needed
-  console.log('Events cleared by user');
+  console.log("Events cleared by user");
 }

@@ -1,5 +1,5 @@
-import type { Component } from 'solid-js';
-import { createSignal } from 'solid-js';
+import type { Component } from "solid-js";
+import { createSignal } from "solid-js";
 
 const EventCard: Component<{ kind: string; event: string }> = (props) => {
   const [isOpen, setIsOpen] = createSignal(false);
@@ -7,17 +7,17 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
 
   // Determine success status (TODO: customize this logic)
   const isSuccess = true;
-  const statusColor = isSuccess ? 'bg-green-500' : 'bg-red-500';
+  const statusColor = isSuccess ? "bg-green-500" : "bg-red-500";
 
   return (
     <div
       class="bg-neutral-800 text-white rounded-lg shadow-lg border border-neutral-600 overflow-hidden transition-all duration-100"
       style={{
         "view-transition-name": "event-card",
-        "animation": "slideInFromTop 0.3s ease-out"
+        animation: "slideInFromTop 0.3s ease-out",
       }}
       classList={{
-        'mb-2': true,
+        "mb-2": true,
       }}
     >
       {/* Accordion Header */}
@@ -28,8 +28,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
         {/* Status Badge */}
         <div
           class={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${statusColor}`}
-        >
-        </div>
+        ></div>
 
         {/* Kind Text */}
         <span class="flex-grow text-left font-semibold">{props.kind}</span>
@@ -38,7 +37,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
         <div
           class="transition-transform duration-100 flex-shrink-0"
           classList={{
-            'rotate-90': isOpen(),
+            "rotate-90": isOpen(),
           }}
         >
           <svg
@@ -61,8 +60,8 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       <div
         class="transition-all duration-100 overflow-hidden"
         classList={{
-          'max-h-96': isOpen(),
-          'max-h-0': !isOpen(),
+          "max-h-96": isOpen(),
+          "max-h-0": !isOpen(),
         }}
       >
         <div class="bg-neutral-900 p-4 border-t border-neutral-700">
@@ -76,4 +75,3 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
 };
 
 export default EventCard;
-
