@@ -229,17 +229,17 @@ go build -o goplow main.go
 
 ### macOS (Intel)
 ```bash
-GOARCH=amd64 GOOS=darwin go build -o goplow main.go
+GOARCH=amd64 GOOS=darwin go build -o goplow cmd/server/main.go
 ```
 
 ### Linux
 ```bash
-GOOS=linux GOARCH=amd64 go build -o goplow main.go
+GOOS=linux GOARCH=amd64 go build -o goplow cmd/server/main.go
 ```
 
 ### Windows
 ```bash
-GOOS=windows GOARCH=amd64 go build -o goplow.exe main.go
+GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 ```
 
 ## Features Details
