@@ -288,6 +288,7 @@ go get -u
 go mod tidy
 ```
 
-## License
+## What's next..?
 
-Created with Go 🔧
+- Adding a build system for SolidJS webpages
+- Validate events against schema in [registry](https://github.com/simplybusiness/schema_registry/blob/master/schemas/com.simplybusiness/primary_detail_search/jsonschema/1-4-1)
