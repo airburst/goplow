@@ -20,7 +20,7 @@
       const statusDiv = document.getElementById("status");
 
       function setupSSE() {
-        eventSource = new EventSource("http://localhost:8001/api/events");
+        eventSource = new EventSource("http://localhost:8081/api/events");
 
         eventSource.onopen = function () {
           statusDiv.innerHTML = '<p style="color: green;">SSE Connected!</p>';
@@ -47,7 +47,7 @@
         const message = input.value.trim();
         if (!message) return;
 
-        fetch("http://localhost:8001/api/messages", {
+        fetch("http://localhost:8081/api/messages", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",

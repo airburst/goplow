@@ -146,7 +146,7 @@ In development mode:
 
 3. **Access** the application at:
    - Frontend with hot reloading: `http://localhost:4000`
-   - Full app with Go backend: `http://localhost:8001`
+   - Full app with Go backend: `http://localhost:8081`
 
 #### Building for Production
 
@@ -185,8 +185,8 @@ Create or edit `config.toml` in the same directory as the executable:
 
 ```toml
 [server]
-# Server port number (default: 8001)
-port = 8001
+# Server port number (default: 8081)
+port = 8081
 
 # Server host to bind to (default: localhost)
 host = "localhost"
@@ -215,7 +215,7 @@ Ingest analytics events. The path is configurable via `events_endpoint` in `conf
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:8001/com.simplybusiness/events \
+curl -X POST http://localhost:8081/com.simplybusiness/events \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
@@ -274,7 +274,7 @@ Returns the HTML interface.
 ### Sending an Event via cURL
 
 ```bash
-curl -X POST http://localhost:8001/com.simplybusiness/events \
+curl -X POST http://localhost:8081/com.simplybusiness/events \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
@@ -291,7 +291,7 @@ curl -X POST http://localhost:8001/com.simplybusiness/events \
 ### Retrieving Events
 
 ```bash
-curl http://localhost:8001/com.simplybusiness/events/list
+curl http://localhost:8081/com.simplybusiness/events/list
 ```
 
 ### Changing the Port
@@ -432,8 +432,8 @@ GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 When running the application, you'll see helpful log messages:
 
 ```
-Starting server on localhost:8001
-Opening browser to http://localhost:8001
+Starting server on localhost:8081
+Opening browser to http://localhost:8081
 ```
 
 Any errors are printed to the console for easy debugging.

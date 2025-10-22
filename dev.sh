@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Starting Goplow in Development Mode${NC}"
 echo -e "${YELLOW}This will start:${NC}"
-echo -e "  1. Go server on http://localhost:8001 (with dev assets from internal/static-dev)"
+echo -e "  1. Go server on http://localhost:8081 (with dev assets from internal/static-dev)"
 echo -e "  2. Pnpm dev on http://localhost:4000 (frontend with hot reloading, proxies API to Go)"
 echo ""
 
@@ -57,7 +57,7 @@ echo -e "${GREEN}✓ Both servers are running!${NC}"
 echo ""
 echo -e "${YELLOW}Access the application at:${NC}"
 echo -e "  Frontend: ${GREEN}http://localhost:4000${NC}"
-echo -e "  Go API: ${GREEN}http://localhost:8001${NC}"
+echo -e "  Go API: ${GREEN}http://localhost:8081${NC}"
 echo ""
 echo -e "${YELLOW}The frontend proxies API requests to the Go server automatically.${NC}"
 echo -e "${YELLOW}Press Ctrl+C to stop both servers${NC}"

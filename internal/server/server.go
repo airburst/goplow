@@ -65,7 +65,7 @@ type AppServer struct {
 func LoadConfig(filepath string) (Config, error) {
 	config := Config{
 		Server: ServerConfig{
-			Port:           8001,
+			Port:           8081,
 			Host:           "localhost",
 			MaxMsgs:        100,
 			EventsEndpoint: "com.simplybusiness/events",

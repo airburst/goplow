@@ -10,7 +10,7 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to the Go server (dev mode only)
       "/api": {
-        target: "http://localhost:8001",
+        target: "http://localhost:8081",
         changeOrigin: true,
       },
     },

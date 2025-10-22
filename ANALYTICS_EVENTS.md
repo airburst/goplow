@@ -74,7 +74,7 @@ Successfully migrated the Goplow application from a simple text message system t
 #### Snowplow Format
 
 ```bash
-curl -X POST http://localhost:8001/api/messages \
+curl -X POST http://localhost:8081/api/messages \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
@@ -94,7 +94,7 @@ curl -X POST http://localhost:8001/api/messages \
 #### Custom Analytics Events
 
 ```bash
-curl -X POST http://localhost:8001/api/messages \
+curl -X POST http://localhost:8081/api/messages \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.mycompany/custom_event/jsonschema/1-0-0",
@@ -111,7 +111,7 @@ curl -X POST http://localhost:8001/api/messages \
 #### Legacy Text Messages (for backward compatibility)
 
 ```bash
-curl -X POST http://localhost:8001/api/messages \
+curl -X POST http://localhost:8081/api/messages \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "message=Hello World"
 ```
@@ -119,7 +119,7 @@ curl -X POST http://localhost:8001/api/messages \
 ### Retrieving Events
 
 ```bash
-curl http://localhost:8001/api/messages
+curl http://localhost:8081/api/messages
 ```
 
 Response includes all events with schema, data, timestamps, and event IDs.

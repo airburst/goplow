@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"goplow/internal/server"
@@ -46,18 +47,6 @@ func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 		}
 	})
 
-	// Legacy endpoint for backward compatibility
-	mux.HandleFunc("/api/messages", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			HandlePostMessage(w, r, appServer)
-		case http.MethodGet:
-			HandleGetMessages(w, r, appServer)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
-
 	// SSE endpoint remains fixed (no CORS)
 	mux.HandleFunc("/api/events", func(w http.ResponseWriter, r *http.Request) {
 		HandleSSE(w, r, appServer)
@@ -71,6 +60,7 @@ func ApplyCORSHeaders(w http.ResponseWriter, appServer *server.AppServer) {
 		w.Header().Set("Access-Control-Allow-Origin", corsOrigins)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 }
 
@@ -240,7 +230,7 @@ func HandlePostMessage(w http.ResponseWriter, r *http.Request, appServer *server
 	// Accept both form data (for backward compatibility) and JSON
 	contentType := r.Header.Get("Content-Type")
 
-	if contentType == "application/json" {
+	if strings.Contains(contentType, "application/json") {
 		// Handle JSON payload (Snowplow format)
 		var payload map[string]interface{}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
