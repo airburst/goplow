@@ -11,7 +11,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
 
   return (
     <div
-      class="p-4 dark:bg-card rounded-2xl shadow-inner-border-dark text-white overflow-hidden transition-all duration-100 dark:shadow-inner-border"
+      class="p-4 bg-card dark:bg-card rounded-2xl text-white overflow-hidden transition-all duration-100 shadow-inner-border dark:shadow-inner-border"
       style={{
         "view-transition-name": "event-card",
         animation: "slideInFromTop 0.3s ease-out",
@@ -64,8 +64,8 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
           "max-h-0": !isOpen(),
         }}
       >
-        <div class="dark:bg-code p-4 rounded-2xl">
-          <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words">
+        <div class="bg-code dark:bg-code p-4 pr-0 rounded-2xl">
+          <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words overflow-y-auto max-h-80 scrollbar-themed">
             {JSON.stringify(parsedEvent, null, 2)}
           </pre>
         </div>

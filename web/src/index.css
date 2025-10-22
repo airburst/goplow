@@ -1,11 +1,18 @@
 @import 'tailwindcss';
 
+/* TODO: Add a light scheme */
+@theme light {
+  --color-main: #23272f;
+  --color-card: #343a46;
+  --color-code: #16181d;
+  --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, .08);
+}
+
 @theme dark {
   --color-main: #23272f;
   --color-card: #343a46;
   --color-code: #16181d;
   --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, .08);
-
 }
 
 body {
@@ -28,4 +35,22 @@ body {
 /* Only the first (newest) card slides in */
 .event-card-wrapper:first-child {
   animation: slideInFromTop 0.3s ease-out;
+}
+
+/* Scrollbar styling for code blocks */
+.scrollbar-themed::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-themed::-webkit-scrollbar-track {
+  background: #16181d;
+}
+
+.scrollbar-themed::-webkit-scrollbar-thumb {
+  background: #464f5e;
+  border-radius: 4px;
+}
+
+.scrollbar-themed::-webkit-scrollbar-thumb:hover {
+  background: #5a6370;
 }
