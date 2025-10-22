@@ -1,5 +1,17 @@
 @import 'tailwindcss';
 
+@theme dark {
+  --color-main: #23272f;
+  --color-card: #343a46;
+  --color-code: #16181d;
+  --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, .08);
+
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Keyframe animations */
 @keyframes slideInFromTop {
   from {

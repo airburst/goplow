@@ -11,7 +11,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
 
   return (
     <div
-      class="bg-neutral-800 text-white rounded-lg shadow-lg border border-neutral-600 overflow-hidden transition-all duration-100"
+      class="p-4 dark:bg-card rounded-2xl shadow-inner-border-dark text-white overflow-hidden transition-all duration-100 dark:shadow-inner-border"
       style={{
         "view-transition-name": "event-card",
         animation: "slideInFromTop 0.3s ease-out",
@@ -23,7 +23,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       {/* Accordion Header */}
       <button
         onClick={() => setIsOpen(!isOpen())}
-        class="w-full flex items-center gap-4 p-4 hover:bg-neutral-700 transition-colors duration-100 cursor-pointer"
+        class="w-full flex items-center gap-4 p-4 hover:bg-card transition-colors duration-100 cursor-pointer"
       >
         {/* Status Badge */}
         <div
@@ -64,7 +64,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
           "max-h-0": !isOpen(),
         }}
       >
-        <div class="bg-neutral-900 p-4 border-t border-neutral-700">
+        <div class="dark:bg-code p-4 rounded-2xl">
           <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words">
             {JSON.stringify(parsedEvent, null, 2)}
           </pre>

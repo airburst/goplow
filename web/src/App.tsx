@@ -9,7 +9,7 @@ const App: Component = () => {
   const subscription = createSSESubscription("/api/events");
 
   return (
-    <div class="min-h-screen bg-neutral-800 overflow-hidden text-white flex flex-col overflow-y-auto">
+    <div class="min-h-screen dark:bg-main overflow-hidden text-white flex flex-col overflow-y-auto">
       <Header subscription={subscription} />
       <MainContainer>
         <EventCardList subscription={subscription} />

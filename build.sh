@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Clean install and build
+rm -rf internal/static/assets
+
 # Build the frontend application
 cd web && pnpm install && pnpm run build
 
