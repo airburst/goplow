@@ -1,0 +1,38 @@
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": [
+    {
+      "e": "ue",
+      "ue_px": "eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy91bnN0cnVjdF9ldmVudC9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6eyJzY2hlbWEiOiJpZ2x1OmNvbS5zaW1wbHlidXNpbmVzcy9oZWxwX3RleHRfb3BlbmVkL2pzb25zY2hlbWEvMS0wLTAiLCJkYXRhIjp7InNpdGUiOiJzaW1wbHlidXNpbmVzc191cyIsInZlcnRpY2FsIjoiVXNhIiwicHJpbWFyeV90ZXh0IjoiRG8geW91IHByb3ZpZGUgYSBzZWNvbmRhcnkgc2VydmljZSBmb3IgY3VzdG9tZXJzIHRoYXQgaXMgYSBzaWduaWZpY2FudCBwYXJ0IG9mIHlvdXIgYnVzaW5lc3M_IiwiaGVscF90ZXh0IjoiSWYgeW91ciBidXNpbmVzcyBmaXRzIGluIG1vcmUgdGhhbiBvbmUgYm94LCB0ZWxsIHVzIGFib3V0IGl0IGhlcmUuIn19fQ",
+      "tv": "js-2.14.0",
+      "tna": "sb-ava",
+      "aid": "us-chopin",
+      "p": "web",
+      "tz": "Europe/London",
+      "lang": "en-GB",
+      "cs": "UTF-8",
+      "f_pdf": "1",
+      "f_qt": "0",
+      "f_realp": "0",
+      "f_wma": "0",
+      "f_dir": "0",
+      "f_fla": "0",
+      "f_java": "0",
+      "f_gears": "0",
+      "f_ag": "0",
+      "res": "3008x1692",
+      "cd": "24",
+      "cookie": "1",
+      "eid": "13b1ff3a-d879-43e3-a589-23c796a3f9d7",
+      "dtm": "1761135213263",
+      "vp": "2406x773",
+      "ds": "2391x1973",
+      "vid": "1",
+      "sid": "51b36ae8-cf00-486c-81cc-177aee788ed7",
+      "duid": "930ae551-2fc8-4e67-b1fe-3e8c8e3d9ecc",
+      "refr": "https://quote-staging.simplybusiness.com/q/coverage_selection/recommendations/68f8c9583d9f6605efa2ebd8",
+      "url": "https://quote-staging.simplybusiness.com/q/usa/usa/business/68f8ca2a3d936a05c26d94f6",
+      "stm": "1761135213264"
+    }
+  ]
+}

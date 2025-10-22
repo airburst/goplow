@@ -1,0 +1,39 @@
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": [
+    {
+      "e": "ue",
+      "ue_px": "eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy91bnN0cnVjdF9ldmVudC9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6eyJzY2hlbWEiOiJpZ2x1OmNvbS5zaW1wbHlidXNpbmVzcy9mb3JtX3F1ZXN0aW9uX2Fuc3dlcmVkL2pzb25zY2hlbWEvMS0wLTQiLCJkYXRhIjp7InNpdGUiOiJzaW1wbHlidXNpbmVzc191cyIsInZlcnRpY2FsIjoiVXNhIiwiam91cm5leV9pZCI6IjY4ZjhjYTJhM2Q5MzZhMDVjMjZkOTRmNiIsInBhZ2VfaW5kZXgiOjEsInBhZ2VfbmFtZSI6IllvdXIgQnVzaW5lc3MiLCJzZWN0aW9uX25hbWUiOiJQbGVhc2UgdGVsbCB1cyBhYm91dCB5b3VyIGJ1c2luZXNzIiwicXVlc3Rpb24iOiJoYXZlX3NlY29uZGFyeV90cmFkZSIsImFuc3dlciI6InllcyJ9fX0",
+      "tv": "js-2.14.0",
+      "tna": "sb-ava",
+      "aid": "us-chopin",
+      "p": "web",
+      "tz": "Europe/London",
+      "lang": "en-GB",
+      "cs": "UTF-8",
+      "f_pdf": "1",
+      "f_qt": "0",
+      "f_realp": "0",
+      "f_wma": "0",
+      "f_dir": "0",
+      "f_fla": "0",
+      "f_java": "0",
+      "f_gears": "0",
+      "f_ag": "0",
+      "res": "3008x1692",
+      "cd": "24",
+      "cookie": "1",
+      "eid": "04a04fd7-a480-4f28-8496-a258202c0cb1",
+      "dtm": "1761135151839",
+      "cx": "eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9jb250ZXh0cy9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6W3sic2NoZW1hIjoiaWdsdTpjb20uc2ltcGx5YnVzaW5lc3Mvc2VydmljZV9jaGFubmVsX2NvbnRleHQvanNvbnNjaGVtYS8xLTAtMSIsImRhdGEiOnsic2VydmljZV9jaGFubmVsX2lkZW50aWZpZXIiOiJzaW1wbHlidXNpbmVzc191cyJ9fV19",
+      "vp": "2406x773",
+      "ds": "2391x1717",
+      "vid": "1",
+      "sid": "51b36ae8-cf00-486c-81cc-177aee788ed7",
+      "duid": "930ae551-2fc8-4e67-b1fe-3e8c8e3d9ecc",
+      "refr": "https://quote-staging.simplybusiness.com/q/coverage_selection/recommendations/68f8c9583d9f6605efa2ebd8",
+      "url": "https://quote-staging.simplybusiness.com/q/usa/usa/business/68f8ca2a3d936a05c26d94f6",
+      "stm": "1761135151840"
+    }
+  ]
+}

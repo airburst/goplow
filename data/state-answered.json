@@ -1,0 +1,41 @@
+{
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": [
+    {
+      "e": "se",
+      "se_ca": "marketing",
+      "se_ac": "us_state_clicked",
+      "se_la": "US state clicked",
+      "se_pr": "https://quote-staging.simplybusiness.com/q/coverage_selection/welcome/68f8c9583d9f6605efa2ebd8?site=simplybusiness_us",
+      "tv": "js-2.14.0",
+      "tna": "sb-ava-br",
+      "aid": "us-chopin",
+      "p": "web",
+      "tz": "Europe/London",
+      "lang": "en-GB",
+      "cs": "UTF-8",
+      "f_pdf": "1",
+      "f_qt": "0",
+      "f_realp": "0",
+      "f_wma": "0",
+      "f_dir": "0",
+      "f_fla": "0",
+      "f_java": "0",
+      "f_gears": "0",
+      "f_ag": "0",
+      "res": "3008x1692",
+      "cd": "24",
+      "cookie": "1",
+      "eid": "54db4676-00f6-4d5b-b58a-78070b07b17b",
+      "dtm": "1761135104886",
+      "cx": "eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9jb250ZXh0cy9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6W3sic2NoZW1hIjoiaWdsdTpjb20uc2ltcGx5YnVzaW5lc3MvZGlzdHJpYnV0aW9uX2NoYW5uZWxfY29udGV4dC9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6eyJzZXJ2aWNlX2NoYW5uZWxfaWRlbnRpZmllciI6InNpbXBseWJ1c2luZXNzX3VzIn19LHsic2NoZW1hIjoiaWdsdTpjb20uc2ltcGx5YnVzaW5lc3Mvc2VydmljZV9jaGFubmVsX2NvbnRleHQvanNvbnNjaGVtYS8xLTAtMCIsImRhdGEiOnsic2VydmljZV9jaGFubmVsX2lkZW50aWZpZXIiOiJzaW1wbHlidXNpbmVzc191cyJ9fV19",
+      "vp": "2406x773",
+      "ds": "2391x1501",
+      "vid": "1",
+      "sid": "51b36ae8-cf00-486c-81cc-177aee788ed7",
+      "duid": "930ae551-2fc8-4e67-b1fe-3e8c8e3d9ecc",
+      "url": "https://quote-staging.simplybusiness.com/q/coverage_selection/welcome/68f8c9583d9f6605efa2ebd8?site=simplybusiness_us",
+      "stm": "1761135104887"
+    }
+  ]
+}
