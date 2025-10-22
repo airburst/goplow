@@ -1,9 +1,35 @@
 import type { Component } from "solid-js";
-import { createSignal } from "solid-js";
+import { createSignal, createMemo } from "solid-js";
+import { type Event } from "../types";
+import {
+  convertEventForCard,
+  extractEventType,
+  getTitleFromEvent,
+} from "../lib/transforms";
+import ChevronIcon from "./ChevronIcon";
 
 const EventCard: Component<{ kind: string; event: string }> = (props) => {
   const [isOpen, setIsOpen] = createSignal(false);
-  const parsedEvent = JSON.parse(props.event);
+
+  const event = createMemo(() => {
+    try {
+      const parsedEvent = JSON.parse(props.event) as Event;
+      return convertEventForCard(parsedEvent);
+    } catch (error) {
+      console.error("Failed to parse event JSON:", error);
+      return null;
+    }
+  });
+
+  const eventValue = event();
+
+  if (!eventValue) {
+    return null;
+  }
+
+  // Derive data from eventValue for card props
+  // const { kind, payload } = eventValue.data;
+  const eventType = getTitleFromEvent(eventValue);
 
   // Determine success status (TODO: customize this logic)
   const isSuccess = true;
@@ -30,30 +56,10 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
           class={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${statusColor}`}
         ></div>
 
-        {/* Kind Text */}
-        <span class="flex-grow text-left font-semibold">{props.kind}</span>
+        {/* Title */}
+        <span class="flex-grow text-left">{eventType}</span>
 
-        {/* Chevron Icon */}
-        <div
-          class="transition-transform duration-100 flex-shrink-0"
-          classList={{
-            "rotate-90": isOpen(),
-          }}
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </div>
+        <ChevronIcon isOpen={isOpen()} />
       </button>
 
       {/* Accordion Content */}
@@ -66,7 +72,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       >
         <div class="bg-code dark:bg-code p-4 pr-0 rounded-2xl">
           <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words overflow-y-auto max-h-80 scrollbar-themed">
-            {JSON.stringify(parsedEvent, null, 2)}
+            {JSON.stringify(eventValue, null, 2)}
           </pre>
         </div>
       </div>

@@ -8,7 +8,6 @@ import (
 
 	"goplow/internal/server"
 	"goplow/internal/static"
-	"goplow/internal/utils"
 )
 
 // RegisterRoutes registers all HTTP routes
@@ -75,25 +74,6 @@ func ApplyCORSHeaders(w http.ResponseWriter, appServer *server.AppServer) {
 	}
 }
 
-// decodeEvent decodes a base64-encoded event string using the utils.DecodeBase64 function
-func decodeEvent(value interface{}) string {
-	if value == nil {
-		return ""
-	}
-
-	if str, ok := value.(string); ok {
-		decoded, err := utils.DecodeBase64(str)
-		if err != nil {
-			// If decoding fails, return the original value
-			// This could happen if the value is not actually base64 encoded
-			return str
-		}
-		return decoded
-	}
-
-	return fmt.Sprintf("%v", value)
-}
-
 // transformEvent transforms an event based on its "e" key type
 func transformEvent(eventData map[string]interface{}) map[string]interface{} {
 	eventType, ok := eventData["e"].(string)
@@ -118,29 +98,29 @@ func transformEvent(eventData map[string]interface{}) map[string]interface{} {
 // transformPageView transforms a Page View event
 func transformPageView(data map[string]interface{}) map[string]interface{} {
 	result := map[string]interface{}{
-		"Title": "Page View",
+		"kind": "Page View",
 	}
 
 	if v, ok := data["url"]; ok {
-		result["Url"] = v
+		result["url"] = v
 	}
 	if v, ok := data["page"]; ok {
-		result["Page"] = v
+		result["page"] = v
 	}
 	if v, ok := data["refr"]; ok {
-		result["Referrer"] = v
+		result["referrer"] = v
 	}
 	if v, ok := data["tna"]; ok {
-		result["Tracker"] = v
+		result["tracker"] = v
 	}
 	if v, ok := data["aid"]; ok {
-		result["App ID"] = v
+		result["app_id"] = v
 	}
 	if v, ok := data["duid"]; ok {
-		result["Device Id"] = v
+		result["device_id"] = v
 	}
 	if v, ok := data["cx"]; ok {
-		result["Context"] = decodeEvent(v)
+		result["context"] = v
 	}
 
 	return result
@@ -149,47 +129,47 @@ func transformPageView(data map[string]interface{}) map[string]interface{} {
 // transformStructuredEvent transforms a Structured Event
 func transformStructuredEvent(data map[string]interface{}) map[string]interface{} {
 	result := map[string]interface{}{
-		"Title": "Structured Event",
+		"kind": "Structured Event",
 	}
 
 	if v, ok := data["se_ca"]; ok {
-		result["Category"] = v
+		result["category"] = v
 	}
 	if v, ok := data["se_ac"]; ok {
-		result["Action"] = v
+		result["action"] = v
 	}
 	if v, ok := data["se_la"]; ok {
-		result["Label"] = v
+		result["label"] = v
 	}
 	if v, ok := data["se_pr"]; ok {
 		if v != nil {
-			result["Property"] = v
+			result["property"] = v
 		} else {
-			result["Property"] = "N/A"
+			result["property"] = "N/A"
 		}
 	} else {
-		result["Property"] = "N/A"
+		result["property"] = "N/A"
 	}
 	if v, ok := data["se_va"]; ok {
 		if v != nil {
-			result["Value"] = v
+			result["value"] = v
 		} else {
-			result["Value"] = "N/A"
+			result["value"] = "N/A"
 		}
 	} else {
-		result["Value"] = "N/A"
+		result["value"] = "N/A"
 	}
 	if v, ok := data["url"]; ok {
-		result["Url"] = v
+		result["url"] = v
 	}
 	if v, ok := data["aid"]; ok {
-		result["App ID"] = v
+		result["app_id"] = v
 	}
 	if v, ok := data["duid"]; ok {
-		result["Device Id"] = v
+		result["device_id"] = v
 	}
 	if v, ok := data["cx"]; ok {
-		result["Context"] = decodeEvent(v)
+		result["context"] = v
 	}
 
 	return result
@@ -198,23 +178,23 @@ func transformStructuredEvent(data map[string]interface{}) map[string]interface{
 // transformUnstructuredEvent transforms an Unstructured (Self-Describing) Event
 func transformUnstructuredEvent(data map[string]interface{}) map[string]interface{} {
 	result := map[string]interface{}{
-		"Title": "Self-Describing Event",
+		"kind": "Self-Describing Event",
 	}
 
 	if v, ok := data["url"]; ok {
-		result["Url"] = v
+		result["url"] = v
 	}
 	if v, ok := data["ue_px"]; ok {
-		result["Payload"] = decodeEvent(v)
+		result["payload"] = v
 	}
 	if v, ok := data["aid"]; ok {
-		result["App ID"] = v
+		result["app_id"] = v
 	}
 	if v, ok := data["duid"]; ok {
-		result["Device Id"] = v
+		result["device_id"] = v
 	}
 	if v, ok := data["cx"]; ok {
-		result["Context"] = decodeEvent(v)
+		result["context"] = v
 	}
 
 	return result

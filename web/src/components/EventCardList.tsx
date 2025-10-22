@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
 import type { SSESubscription } from "../lib/sse";
-import { transformEvent } from "../lib/transform";
+import { transformEvent } from "../lib/transforms";
 import EventCard from "./EventCard";
 
 const EventCardList: Component<{ subscription: SSESubscription }> = (props) => {
@@ -21,6 +21,7 @@ const EventCardList: Component<{ subscription: SSESubscription }> = (props) => {
           {(event, index) => {
             const transformed = transformEvent(event);
             const isFirst = index() === 0;
+
             return (
               <div
                 class="event-card-wrapper"
