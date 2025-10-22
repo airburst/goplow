@@ -32,6 +32,7 @@ go build -o goplow ./cmd/server
 ```
 
 The application will:
+
 1. Start a web server on the configured host and port
 2. Automatically open your default browser
 3. Display an event stream interface for viewing analytics events in real-time
@@ -43,6 +44,7 @@ The web interface is built using SolidJS and is located in the `web/` directory.
 ### Prerequisites
 
 Ensure you have Node.js and pnpm installed:
+
 ```bash
 # Install pnpm if you haven't already
 npm install -g pnpm
@@ -62,6 +64,7 @@ pnpm build
 ```
 
 The build process will:
+
 - Compile the SolidJS application
 - Generate optimized JavaScript and CSS bundles
 - Output the built files to `../internal/static/` (preserving the `static.go` file)
@@ -70,24 +73,27 @@ The build process will:
 ### Development Mode
 
 For development with hot reloading:
+
 ```bash
 # In the web directory
 pnpm dev
 ```
 
-This will start the Vite development server on `http://localhost:3000`.
+This will start the Vite development server on `http://localhost:4000`.
 
 ### Development Workflow (Full Stack)
 
 To work on both frontend and backend with hot reloading, use development mode:
 
 #### Option 1: Using the dev script (Recommended)
+
 ```bash
 # From the project root
 ./dev.sh
 ```
 
 This will:
+
 - Start the Go server with development mode enabled
 - Start pnpm dev for frontend hot reloading
 - Serve assets from `internal/static-dev` instead of embedded assets
@@ -96,6 +102,7 @@ This will:
 #### Option 2: Using Make targets
 
 In separate terminals:
+
 ```bash
 # Terminal 1: Start Go server in dev mode
 make dev-server
@@ -109,6 +116,7 @@ make dev-web
 #### Option 3: Manual commands
 
 In separate terminals:
+
 ```bash
 # Terminal 1: Go server
 GOPLOW_DEV_MODE=true GOPLOW_DEV_ASSETS_PATH=./internal/static-dev go run ./cmd/server/main.go
@@ -123,23 +131,27 @@ DEV=true pnpm dev
 #### How It Works
 
 In development mode:
+
 1. **Go Server** runs with `GOPLOW_DEV_MODE=true` which:
+
    - Serves HTML and assets from `internal/static-dev` instead of embedded files
    - Allows real-time updates without rebuilding the Go binary
    - Allows hot reloading of the frontend
 
 2. **Pnpm Dev** runs with `DEV=true` which:
+
    - Outputs built assets to `internal/static-dev/` (the dev folder)
-   - Runs the Vite dev server on port 3000
+   - Runs the Vite dev server on port 4000
    - Provides hot module reloading for frontend changes
 
 3. **Access** the application at:
-   - Frontend with hot reloading: `http://localhost:3000`
-   - Full app with Go backend: `http://localhost:8000`
+   - Frontend with hot reloading: `http://localhost:4000`
+   - Full app with Go backend: `http://localhost:8001`
 
 #### Building for Production
 
 After development, build the production-ready assets:
+
 ```bash
 # Build frontend assets to internal/static (production folder)
 cd web
@@ -155,6 +167,7 @@ make build
 ### Build Configuration
 
 The build is configured in `web/vite.config.ts`:
+
 - **Output Directory (Dev)**: `../internal/static-dev` - When DEV=true
 - **Output Directory (Prod)**: `../internal/static` - Default (embedded in binary)
 - **Empty Directory**: `false` - Preserves the `static.go` file during builds
@@ -172,8 +185,8 @@ Create or edit `config.toml` in the same directory as the executable:
 
 ```toml
 [server]
-# Server port number (default: 8080)
-port = 8080
+# Server port number (default: 8001)
+port = 8001
 
 # Server host to bind to (default: localhost)
 host = "localhost"
@@ -191,15 +204,18 @@ If `config.toml` doesn't exist, the application uses default values.
 ## API Endpoints
 
 ### POST `/com.simplybusiness/events` (configurable)
+
 Ingest analytics events. The path is configurable via `events_endpoint` in `config.toml`.
 
 **Request:**
+
 - Content-Type: `application/json`
 - Body: Snowplow analytics event payload
 
 **Example Request:**
+
 ```bash
-curl -X POST http://localhost:8080/com.simplybusiness/events \
+curl -X POST http://localhost:8001/com.simplybusiness/events \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
@@ -215,6 +231,7 @@ curl -X POST http://localhost:8080/com.simplybusiness/events \
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success"
@@ -222,9 +239,11 @@ curl -X POST http://localhost:8080/com.simplybusiness/events \
 ```
 
 ### GET `/com.simplybusiness/events/list` (configurable)
+
 Retrieve all stored events as JSON.
 
 **Response:**
+
 ```json
 [
   {
@@ -243,9 +262,11 @@ Retrieve all stored events as JSON.
 ```
 
 ### GET `/api/events` (Server-Sent Events)
+
 Stream new events in real-time via Server-Sent Events. This endpoint is fixed and not configurable.
 
 ### GET `/`
+
 Returns the HTML interface.
 
 ## Usage Examples
@@ -253,7 +274,7 @@ Returns the HTML interface.
 ### Sending an Event via cURL
 
 ```bash
-curl -X POST http://localhost:8080/com.simplybusiness/events \
+curl -X POST http://localhost:8001/com.simplybusiness/events \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
@@ -270,12 +291,13 @@ curl -X POST http://localhost:8080/com.simplybusiness/events \
 ### Retrieving Events
 
 ```bash
-curl http://localhost:8080/com.simplybusiness/events/list
+curl http://localhost:8001/com.simplybusiness/events/list
 ```
 
 ### Changing the Port
 
 Edit `config.toml`:
+
 ```toml
 [server]
 port = 3000
@@ -283,6 +305,7 @@ host = "localhost"
 ```
 
 Then run the application:
+
 ```bash
 ./goplow
 ```
@@ -355,21 +378,25 @@ goplow/
 ## Building for Different Platforms
 
 ### macOS (ARM64 - Apple Silicon)
+
 ```bash
 go build -o goplow main.go
 ```
 
 ### macOS (Intel)
+
 ```bash
 GOARCH=amd64 GOOS=darwin go build -o goplow cmd/server/main.go
 ```
 
 ### Linux
+
 ```bash
 GOOS=linux GOARCH=amd64 go build -o goplow cmd/server/main.go
 ```
 
 ### Windows
+
 ```bash
 GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 ```
@@ -377,12 +404,14 @@ GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 ## Features Details
 
 ### Message Management
+
 - Messages are stored in memory during the application's runtime
 - Maximum number of messages is configurable via `config.toml`
 - Old messages are removed when the limit is exceeded
 - Messages are automatically cleared when the application restarts
 
 ### Web Interface
+
 - Clean, modern design with gradient colors
 - Real-time message updates (auto-refresh every 2 seconds)
 - Send messages via text input or Enter key
@@ -392,6 +421,7 @@ GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 - Empty state message when no messages exist
 
 ### Browser Integration
+
 - Automatically detects and opens the default browser:
   - macOS: Uses `open` command
   - Linux: Uses `xdg-open` command
@@ -402,8 +432,8 @@ GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 When running the application, you'll see helpful log messages:
 
 ```
-Starting server on localhost:8080
-Opening browser to http://localhost:8080
+Starting server on localhost:8001
+Opening browser to http://localhost:8001
 ```
 
 Any errors are printed to the console for easy debugging.
@@ -411,10 +441,13 @@ Any errors are printed to the console for easy debugging.
 ## Development
 
 ### Dependencies
+
 The application uses one external dependency:
+
 - `github.com/BurntSushi/toml` - For TOML configuration file parsing
 
 To update dependencies:
+
 ```bash
 go get -u
 go mod tidy

@@ -1,6 +1,7 @@
 # Analytics Event Schema Migration
 
 ## Overview
+
 Successfully migrated the Goplow application from a simple text message system to support Snowplow analytics events with full JSON schema support.
 
 ## Changes Made
@@ -8,6 +9,7 @@ Successfully migrated the Goplow application from a simple text message system t
 ### 1. **Server-Side Changes** (`internal/server/server.go`)
 
 #### New Event Structure
+
 - Replaced `Message` struct with `Event` struct that supports:
   - `id`: Unique event identifier
   - `schema`: Iglu schema reference (e.g., "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4")
@@ -16,6 +18,7 @@ Successfully migrated the Goplow application from a simple text message system t
   - `receivedAt`: Server reception timestamp
 
 #### Key Methods
+
 - `AddEvent(schema string, data []map[string]interface{})` - Adds new analytics events
 - `GetEvents()` - Retrieves all stored events
 - `AddMessage(text string)` - Backward compatible method that wraps text in event format
@@ -25,23 +28,27 @@ Successfully migrated the Goplow application from a simple text message system t
 ### 2. **Handler Changes** (`internal/handlers/handlers.go`)
 
 #### Updated `HandlePostMessage`
+
 - Now accepts both JSON and form-data payloads
 - **JSON Format**: Expects Snowplow-style payloads with `schema` and `data` fields
 - **Form Data**: Falls back to legacy text message format for backward compatibility
 - Properly parses and stores event schema information
 
 #### Updated `HandleGetMessages`
+
 - Returns events instead of simple messages
 - Includes full schema and data information in responses
 
 ### 3. **Frontend Changes** (`internal/static/`)
 
 #### HTML (`index.html`)
+
 - Updated title to "Goplow Analytics"
 - Replaced single-line text input with multi-line textarea for JSON payload entry
 - Updated UI labels to reflect event-based terminology
 
 #### JavaScript (`js/app.js`)
+
 - Updated event handling in SSE connection
 - Enhanced UI to display:
   - Event ID
@@ -54,6 +61,7 @@ Successfully migrated the Goplow application from a simple text message system t
 - Added `addEventToUI()` function for real-time event rendering
 
 #### CSS (`css/style.css`)
+
 - Added `.message-header` for displaying event metadata
 - Added `.event-id`, `.event-schema`, `.event-time` classes for event information
 - Added `.message-text pre` styling for formatted JSON display
@@ -64,8 +72,9 @@ Successfully migrated the Goplow application from a simple text message system t
 ### Sending Analytics Events
 
 #### Snowplow Format
+
 ```bash
-curl -X POST http://localhost:8080/api/messages \
+curl -X POST http://localhost:8001/api/messages \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
@@ -83,8 +92,9 @@ curl -X POST http://localhost:8080/api/messages \
 ```
 
 #### Custom Analytics Events
+
 ```bash
-curl -X POST http://localhost:8080/api/messages \
+curl -X POST http://localhost:8001/api/messages \
   -H "Content-Type: application/json" \
   -d '{
     "schema": "iglu:com.mycompany/custom_event/jsonschema/1-0-0",
@@ -99,8 +109,9 @@ curl -X POST http://localhost:8080/api/messages \
 ```
 
 #### Legacy Text Messages (for backward compatibility)
+
 ```bash
-curl -X POST http://localhost:8080/api/messages \
+curl -X POST http://localhost:8001/api/messages \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "message=Hello World"
 ```
@@ -108,7 +119,7 @@ curl -X POST http://localhost:8080/api/messages \
 ### Retrieving Events
 
 ```bash
-curl http://localhost:8080/api/messages
+curl http://localhost:8001/api/messages
 ```
 
 Response includes all events with schema, data, timestamps, and event IDs.
@@ -129,6 +140,7 @@ Response includes all events with schema, data, timestamps, and event IDs.
 ## Backward Compatibility
 
 The system maintains backward compatibility:
+
 - Text messages are automatically converted to events with `schema: "com.text.message"`
 - Form-data submission still works alongside JSON payloads
 - Legacy API consumers are not affected

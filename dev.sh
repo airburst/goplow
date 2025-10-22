@@ -13,8 +13,8 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Starting Goplow in Development Mode${NC}"
 echo -e "${YELLOW}This will start:${NC}"
-echo -e "  1. Go server on http://localhost:8000 (with dev assets from internal/static-dev)"
-echo -e "  2. Pnpm dev on http://localhost:3000 (frontend with hot reloading, proxies API to Go)"
+echo -e "  1. Go server on http://localhost:8001 (with dev assets from internal/static-dev)"
+echo -e "  2. Pnpm dev on http://localhost:4000 (frontend with hot reloading, proxies API to Go)"
 echo ""
 
 # Trap to cleanup both processes on exit
@@ -41,14 +41,14 @@ WEB_PID=$!
 
 sleep 2
 
-# Open browser to localhost:3000
+# Open browser to localhost:4000
 echo -e "${GREEN}Opening browser...${NC}"
 if command -v open &> /dev/null; then
-    open http://localhost:3000
+    open http://localhost:4000
 elif command -v xdg-open &> /dev/null; then
-    xdg-open http://localhost:3000
+    xdg-open http://localhost:4000
 elif command -v start &> /dev/null; then
-    start http://localhost:3000
+    start http://localhost:4000
 else
     echo -e "${YELLOW}Could not open browser automatically${NC}"
 fi
@@ -56,8 +56,8 @@ fi
 echo -e "${GREEN}✓ Both servers are running!${NC}"
 echo ""
 echo -e "${YELLOW}Access the application at:${NC}"
-echo -e "  Frontend: ${GREEN}http://localhost:3000${NC}"
-echo -e "  Go API: ${GREEN}http://localhost:8000${NC}"
+echo -e "  Frontend: ${GREEN}http://localhost:4000${NC}"
+echo -e "  Go API: ${GREEN}http://localhost:8001${NC}"
 echo ""
 echo -e "${YELLOW}The frontend proxies API requests to the Go server automatically.${NC}"
 echo -e "${YELLOW}Press Ctrl+C to stop both servers${NC}"

@@ -6,11 +6,11 @@ import devtools from "solid-devtools/vite";
 export default defineConfig({
   plugins: [devtools(), solidPlugin(), tailwindcss()],
   server: {
-    port: 3000,
+    port: 4000,
     proxy: {
       // Proxy API requests to the Go server (dev mode only)
       "/api": {
-        target: "http://localhost:8000",
+        target: "http://localhost:8001",
         changeOrigin: true,
       },
     },
