@@ -2,16 +2,21 @@ package static
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 //go:embed index.html assets/*
 var staticFiles embed.FS
+
+//go:embed schemas
+var schemasFS embed.FS
 
 var devMode = os.Getenv("GOPLOW_DEV_MODE") == "true"
 var devAssetsPath = os.Getenv("GOPLOW_DEV_ASSETS_PATH")
@@ -64,14 +69,9 @@ func RegisterStaticRoutes(mux *http.ServeMux) {
 		}
 	}
 
-	// Serve schemas from the schemas directory
-	schemasDir := "./schemas"
-	if _, err := os.Stat(schemasDir); err == nil {
-		log.Printf("Serving schemas from %s\n", schemasDir)
-		mux.Handle("/schemas/", http.StripPrefix("/schemas/", http.FileServer(http.Dir(schemasDir))))
-	} else {
-		log.Printf("Schemas directory not found at %s\n", schemasDir)
-	}
+	// Serve embedded schemas
+	mux.HandleFunc("/schemas/", ServeEmbeddedSchemas)
+	mux.HandleFunc("/schemas", ListEmbeddedSchemas)
 
 	// Keep the old /static/ path for backward compatibility
 	staticFS := GetStaticFS()
@@ -109,4 +109,50 @@ func ListStaticFiles() {
 		}
 		return nil
 	})
+}
+
+// ServeEmbeddedSchemas serves schema files from embedded filesystem
+func ServeEmbeddedSchemas(w http.ResponseWriter, r *http.Request) {
+	// Extract schema path from URL
+	schemaPath := strings.TrimPrefix(r.URL.Path, "/schemas/")
+
+	// Construct the full path within the embedded filesystem
+	fullPath := filepath.Join("schemas", schemaPath)
+
+	// Read the file from embedded filesystem
+	data, err := schemasFS.ReadFile(fullPath)
+	if err != nil {
+		http.Error(w, "Schema not found", http.StatusNotFound)
+		return
+	}
+
+	// Set content type and serve the schema
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+// ListEmbeddedSchemas lists all available schemas
+func ListEmbeddedSchemas(w http.ResponseWriter, r *http.Request) {
+	var schemas []string
+
+	err := fs.WalkDir(schemasFS, "schemas", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			// Remove the "schemas/" prefix for the API response
+			relativePath := strings.TrimPrefix(path, "schemas/")
+			schemas = append(schemas, relativePath)
+		}
+		return nil
+	})
+
+	if err != nil {
+		http.Error(w, "Failed to list schemas", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string][]string{"schemas": schemas})
 }

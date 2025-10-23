@@ -27,4 +27,4 @@ gitignore
 Thumbs.db
 
 # JSON schemas
-schemas/*
+/internal/static/schemas/*
