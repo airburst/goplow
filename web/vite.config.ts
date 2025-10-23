@@ -13,6 +13,11 @@ export default defineConfig({
         target: "http://localhost:8081",
         changeOrigin: true,
       },
+      // Proxy schema requests to the Go server (dev mode only)
+      "/schemas": {
+        target: "http://localhost:8081",
+        changeOrigin: true,
+      },
     },
   },
   build: {

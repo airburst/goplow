@@ -11,6 +11,7 @@ addFormats(ajv);
 interface ValidationResult {
   isValid: boolean;
   error?: string;
+  warning?: string;
 }
 
 interface ValidationResultUnknown {
@@ -47,6 +48,119 @@ function extractSchemaPath(schemaUri: string): string | null {
  */
 function isSimplyBusinessSchema(schemaUri: string): boolean {
   return schemaUri.includes("simplybusiness");
+}
+
+/**
+ * Parses a schema version string (e.g., "1-0-4") into comparable numbers
+ * @param version - Version string in format "major-minor-patch"
+ * @returns Object with major, minor, patch numbers or null if invalid
+ */
+function parseSchemaVersion(
+  version: string
+): { major: number; minor: number; patch: number } | null {
+  const parts = version.split("-");
+  if (parts.length !== 3) return null;
+
+  const major = parseInt(parts[0], 10);
+  const minor = parseInt(parts[1], 10);
+  const patch = parseInt(parts[2], 10);
+
+  if (isNaN(major) || isNaN(minor) || isNaN(patch)) return null;
+
+  return { major, minor, patch };
+}
+
+/**
+ * Compares two schema versions
+ * @param version1 - First version object
+ * @param version2 - Second version object
+ * @returns -1 if version1 < version2, 0 if equal, 1 if version1 > version2
+ */
+function compareVersions(
+  version1: { major: number; minor: number; patch: number },
+  version2: { major: number; minor: number; patch: number }
+): number {
+  if (version1.major !== version2.major) {
+    return version1.major - version2.major;
+  }
+  if (version1.minor !== version2.minor) {
+    return version1.minor - version2.minor;
+  }
+  return version1.patch - version2.patch;
+}
+
+/**
+ * Checks if there are newer versions of a schema available
+ * @param schemaPath - The current schema path (e.g., "com.simplybusiness/help_text_opened/jsonschema/1-0-0")
+ * @returns Warning message if newer version exists, null otherwise
+ */
+async function checkForNewerVersion(
+  schemaPath: string
+): Promise<string | null> {
+  try {
+    // Extract the base path and current version
+    const pathParts = schemaPath.split("/");
+    if (pathParts.length < 4) return null;
+
+    const vendor = pathParts[0];
+    const name = pathParts[1];
+    const format = pathParts[2];
+    const currentVersion = pathParts[3];
+
+    const currentVersionObj = parseSchemaVersion(currentVersion);
+    if (!currentVersionObj) return null;
+
+    // Try to find newer versions by checking common version patterns
+    // We'll check up to 5 patch versions ahead and 2 minor versions ahead
+    const versionsToCheck = [];
+
+    // Check patch versions
+    for (
+      let patch = currentVersionObj.patch + 1;
+      patch <= currentVersionObj.patch + 5;
+      patch++
+    ) {
+      versionsToCheck.push(
+        `${currentVersionObj.major}-${currentVersionObj.minor}-${patch}`
+      );
+    }
+
+    // Check minor versions
+    for (
+      let minor = currentVersionObj.minor + 1;
+      minor <= currentVersionObj.minor + 2;
+      minor++
+    ) {
+      versionsToCheck.push(`${currentVersionObj.major}-${minor}-0`);
+      versionsToCheck.push(`${currentVersionObj.major}-${minor}-1`);
+    }
+
+    // Check major version (just next one)
+    versionsToCheck.push(`${currentVersionObj.major + 1}-0-0`);
+
+    // Test each potential newer version
+    for (const version of versionsToCheck) {
+      const testPath = `${vendor}/${name}/${format}/${version}`;
+      try {
+        const response = await fetch(`/schemas/${testPath}`);
+        if (response.ok) {
+          const newerVersionObj = parseSchemaVersion(version);
+          if (
+            newerVersionObj &&
+            compareVersions(newerVersionObj, currentVersionObj) > 0
+          ) {
+            return `Newer schema version ${version} is available (currently using ${currentVersion})`;
+          }
+        }
+      } catch {
+        // Ignore fetch errors for version checks
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -136,6 +250,15 @@ async function findAndValidateSchemas(
           // Validate the adjacent data
           if (obj.data !== undefined) {
             const validation = validateWithAjv(obj.data, schema);
+
+            // Check for newer versions if validation passed
+            if (validation.isValid) {
+              const warning = await checkForNewerVersion(schemaPath);
+              if (warning) {
+                validation.warning = warning;
+              }
+            }
+
             results.push(validation);
           } else {
             results.push({
@@ -210,6 +333,14 @@ export async function validateEventSingle(
     return firstFailure;
   }
 
-  // If no failures, return first result (could be true or "unknown")
+  // Return the first warning if any exist (valid but with warning)
+  const firstWarning = results.find(
+    (result) => result.isValid === true && result.warning
+  );
+  if (firstWarning) {
+    return firstWarning;
+  }
+
+  // If no failures or warnings, return first result (could be true or "unknown")
   return results[0];
 }

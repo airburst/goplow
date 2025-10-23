@@ -8,9 +8,12 @@ import ChevronIcon from "./ChevronIcon";
 const EventCard: Component<{ kind: string; event: string }> = (props) => {
   const [isOpen, setIsOpen] = createSignal(false);
   const [validationStatus, setValidationStatus] = createSignal<
-    "unknown" | "valid" | "invalid"
+    "unknown" | "valid" | "invalid" | "warning"
   >("unknown");
   const [validationError, setValidationError] = createSignal<string | null>(
+    null
+  );
+  const [validationWarning, setValidationWarning] = createSignal<string | null>(
     null
   );
 
@@ -30,23 +33,32 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
     if (eventValue) {
       try {
         const result = await validateEventSingle(eventValue);
-        console.log("🚀 ~ EventCard ~ result:", result);
 
         if (result.isValid === true) {
-          setValidationStatus("valid");
-          setValidationError(null);
+          if (result.warning) {
+            setValidationStatus("warning");
+            setValidationWarning(result.warning);
+            setValidationError(null);
+          } else {
+            setValidationStatus("valid");
+            setValidationWarning(null);
+            setValidationError(null);
+          }
         } else if (result.isValid === false) {
           setValidationStatus("invalid");
           setValidationError(result.error || "Validation failed");
+          setValidationWarning(null);
         } else {
           // result.isValid === "unknown"
           setValidationStatus("unknown");
           setValidationError(null);
+          setValidationWarning(null);
         }
       } catch (error) {
         console.error("Validation error:", error);
         setValidationStatus("invalid");
         setValidationError("Failed to validate event");
+        setValidationWarning(null);
       }
     }
   });
@@ -68,6 +80,8 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
         return "bg-green-500";
       case "invalid":
         return "bg-red-500";
+      case "warning":
+        return "bg-orange-500";
       case "unknown":
       default:
         return "bg-gray-400 animate-pulse shadow-lg";
@@ -111,9 +125,17 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       >
         {/* Error Alert */}
         {validationStatus() === "invalid" && validationError() && (
-          <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4 mx-4">
+          <div class="bg-red-600 border border-red-500 text-white px-4 py-3 rounded-lg mb-4 mx-4">
             <strong class="font-bold">Validation Error: </strong>
             <span class="block sm:inline">{validationError()}</span>
+          </div>
+        )}
+
+        {/* Warning Alert */}
+        {validationStatus() === "warning" && validationWarning() && (
+          <div class="bg-orange-600 border border-orange-500 text-white px-4 py-3 rounded-lg mb-4 mx-4">
+            <strong class="font-bold">Schema Warning: </strong>
+            <span class="block sm:inline">{validationWarning()}</span>
           </div>
         )}
 

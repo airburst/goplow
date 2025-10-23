@@ -4,6 +4,7 @@ import unstructuredExample from "./fixtures/unstructured-example.json";
 import unstructuredNestedExample from "./fixtures/unstructured-nested-example.json";
 import structuredExample from "./fixtures/structured-example.json";
 import badExample from "./fixtures/bad-example.json";
+import warningExample from "./fixtures/warning-example.json";
 
 // Mock the fetch function for schema loading
 const mockFetch = vi.fn();
@@ -412,6 +413,84 @@ describe("validateEventSingle", () => {
       const result = await validateEventSingle(badExample);
 
       expect(result.isValid).toBe(false);
+    });
+
+    it("should return a warning when a newer schema version is available", async () => {
+      // Mock the schema fetch to simulate schema availability
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.includes("service_channel_context/jsonschema/1-0-1")) {
+          return {
+            ok: true,
+            json: async () => mockServiceChannelContextSchema,
+          };
+        } else if (url.includes("form_question_answered/jsonschema/1-0-3")) {
+          // Return the older schema
+          return {
+            ok: true,
+            json: async () => ({
+              type: "object",
+              properties: {
+                site: { type: "string" },
+                page_index: { type: "integer" },
+                page_name: { type: "string" },
+                section_name: { type: "string" },
+                question: { type: "string" },
+                answer: { type: "string" },
+              },
+              required: [
+                "site",
+                "page_index",
+                "page_name",
+                "section_name",
+                "question",
+                "answer",
+              ],
+              additionalProperties: false,
+            }),
+          };
+        } else if (url.includes("form_question_answered/jsonschema/1-0-4")) {
+          // Simulate newer version exists
+          return {
+            ok: true,
+            json: async () => ({
+              type: "object",
+              properties: {
+                site: { type: "string" },
+                page_index: { type: "integer" },
+                page_name: { type: "string" },
+                section_name: { type: "string" },
+                question: { type: "string" },
+                answer: { type: "string" },
+                new_field: { type: "string" },
+              },
+              required: [
+                "site",
+                "page_index",
+                "page_name",
+                "section_name",
+                "question",
+                "answer",
+              ],
+              additionalProperties: false,
+            }),
+          };
+        } else {
+          return {
+            ok: false,
+            status: 404,
+          };
+        }
+      });
+
+      const result = await validateEventSingle(warningExample);
+
+      expect(result.isValid).toBe(true);
+      if (result.isValid === true) {
+        expect(result.warning).toContain(
+          "Newer schema version 1-0-4 is available"
+        );
+        expect(result.warning).toContain("currently using 1-0-3");
+      }
     });
   });
 });

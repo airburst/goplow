@@ -1,0 +1,37 @@
+{
+  "id": 4,
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": {
+    "app_id": "us-chopin",
+    "context": {
+      "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+      "data": [
+        {
+          "schema": "iglu:com.simplybusiness/service_channel_context/jsonschema/1-0-1",
+          "data": {
+            "service_channel_identifier": "simplybusiness_us"
+          }
+        }
+      ]
+    },
+    "device_id": "930ae551-2fc8-4e67-b1fe-3e8c8e3d9ecc",
+    "kind": "Self-Describing Event",
+    "payload": {
+      "schema": "iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+      "data": {
+        "schema": "iglu:com.simplybusiness/form_question_answered/jsonschema/1-0-3",
+        "data": {
+          "site": "simplybusiness_us",
+          "page_index": 1,
+          "page_name": "Your Business",
+          "section_name": "Please tell us about your business",
+          "question": "have_secondary_trade",
+          "answer": "yes"
+        }
+      }
+    },
+    "url": "https://quote-staging.simplybusiness.com/q/usa/usa/business/68f8ca2a3d936a05c26d94f6"
+  },
+  "timestamp": "2025-10-23T21:21:27.790542+01:00",
+  "receivedAt": "2025-10-23T21:21:27.790543+01:00"
+}
