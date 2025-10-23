@@ -1,18 +1,6 @@
-# Goplow �
+# Goplow ❄️
 
-A single-file Go executable that runs a web server for displaying analytics events in real-time. The application automatically opens your default browser on startup and serves a beautiful, responsive web interface.
-
-## Features
-
-- ✅ **Single-file executable** - Just one binary to run
-- ✅ **Auto-opens browser** - Launches your default browser automatically
-- ✅ **Web-based UI** - Beautiful, responsive interface
-- ✅ **Real-time events** - Analytics events stream in real-time via SSE
-- ✅ **Snowplow-compatible** - Supports Snowplow analytics event format
-- ✅ **Configurable endpoints** - Customize the analytics event endpoint
-- ✅ **Configurable** - Use `config.toml` to customize settings
-- ✅ **Cross-platform** - Works on macOS, Linux, and Windows
-- ✅ **Event storage** - Keeps events in memory with configurable limit
+A single-file Go executable that runs a web server for displaying analytics events in real-time. The application automatically opens your default browser on startup and serves a responsive web interface.
 
 ## Quick Start
 
@@ -23,9 +11,7 @@ A single-file Go executable that runs a web server for displaying analytics even
 cd goplow
 
 # Build the executable
-make build
-# or
-go build -o goplow ./cmd/server
+./scripts/build.sh
 
 # Run the application
 ./goplow
@@ -85,11 +71,9 @@ This will start the Vite development server on `http://localhost:4000`.
 
 To work on both frontend and backend with hot reloading, use development mode:
 
-#### Option 1: Using the dev script (Recommended)
-
 ```bash
 # From the project root
-./dev.sh
+./scripts/dev.sh
 ```
 
 This will:
@@ -97,56 +81,8 @@ This will:
 - Start the Go server with development mode enabled
 - Start pnpm dev for frontend hot reloading
 - Serve assets from `internal/static-dev` instead of embedded assets
-- Both processes run in parallel with automatic cleanup on Ctrl+C
 
-#### Option 2: Using Make targets
-
-In separate terminals:
-
-```bash
-# Terminal 1: Start Go server in dev mode
-make dev-server
-```
-
-```bash
-# Terminal 2: Start frontend dev server
-make dev-web
-```
-
-#### Option 3: Manual commands
-
-In separate terminals:
-
-```bash
-# Terminal 1: Go server
-GOPLOW_DEV_MODE=true GOPLOW_DEV_ASSETS_PATH=./internal/static-dev go run ./cmd/server/main.go
-```
-
-```bash
-# Terminal 2: Frontend
-cd web
-DEV=true pnpm dev
-```
-
-#### How It Works
-
-In development mode:
-
-1. **Go Server** runs with `GOPLOW_DEV_MODE=true` which:
-
-   - Serves HTML and assets from `internal/static-dev` instead of embedded files
-   - Allows real-time updates without rebuilding the Go binary
-   - Allows hot reloading of the frontend
-
-2. **Pnpm Dev** runs with `DEV=true` which:
-
-   - Outputs built assets to `internal/static-dev/` (the dev folder)
-   - Runs the Vite dev server on port 4000
-   - Provides hot module reloading for frontend changes
-
-3. **Access** the application at:
-   - Frontend with hot reloading: `http://localhost:4000`
-   - Full app with Go backend: `http://localhost:8081`
+Both processes run in parallel with automatic cleanup on Ctrl+C
 
 #### Building for Production
 
@@ -161,21 +97,6 @@ pnpm build
 make build
 
 # Run the production binary
-./goplow
-```
-
-### Build Configuration
-
-The build is configured in `web/vite.config.ts`:
-
-- **Output Directory (Dev)**: `../internal/static-dev` - When DEV=true
-- **Output Directory (Prod)**: `../internal/static` - Default (embedded in binary)
-- **Empty Directory**: `false` - Preserves the `static.go` file during builds
-- **Target**: `esnext` - Modern JavaScript for optimal performance
-
-### Running the Executable
-
-```bash
 ./goplow
 ```
 
@@ -314,7 +235,7 @@ Then run the application:
 
 The project follows a clean architecture with clear separation of concerns:
 
-```
+```bash
 goplow/
 ├── cmd/
 │   └── server/              # Application entry point
@@ -324,30 +245,29 @@ goplow/
 │   │   └── handlers.go
 │   ├── server/              # Core server logic and models
 │   │   └── server.go
-│   └── static/              # Embedded static files (HTML, CSS, JS)
-│       ├── index.html       # SolidJS built HTML
-│       ├── assets/          # SolidJS built assets (JS, CSS)
-│       ├── css/             # Legacy CSS files
-│       ├── js/              # Legacy JS files
-│       └── static.go        # Static file serving
+│   ├── static/              # Embedded static files (HTML, CSS, JS)
+│   │   ├── index.html       # SolidJS built HTML
+│   │   ├── assets/          # SolidJS built assets (JS, CSS)
+│   │   └── static.go        # Static file serving
+│   └── utils/               # Utility functions
+│       ├── cors.go          # CORS middleware
+│       └── handlers.go      # Handler utilities
 ├── web/                     # SolidJS web application source
-│   ├── src/                 # SolidJS source files
-│   │   ├── App.tsx
-│   │   ├── index.tsx
-│   │   └── index.css
-│   ├── package.json         # Node.js dependencies
-│   ├── pnpm-lock.yaml       # pnpm lockfile
-│   ├── vite.config.ts       # Vite build configuration
-│   └── tsconfig.json        # TypeScript configuration
+│   └── src/                 # SolidJS source files
+│       ├── App.tsx          # Main application component
+│       ├── index.tsx        # Application entry point
+│       ├── index.css        # Global styles
+│       ├── types.ts         # TypeScript type definitions
+│       ├── components/      # React/SolidJS components
+│       └── lib/             # Utility libraries
 ├── pkg/
 │   └── browser/             # Cross-platform browser opening
 │       └── browser.go
-├── config.toml              # Configuration file (optional)
-├── go.mod                   # Go module definition
-├── go.sum                   # Dependency checksums
-├── goplow                   # Compiled executable
-├── Makefile                 # Build automation
-└── README.md                # This file
+├── data/                    # Sample data files
+├── scripts/                 # Build and development scripts
+│   ├── build.sh             # Production build script
+│   └── dev.sh               # Development mode script
+├── schema-validation/       # Schema validation utilities
 ```
 
 ## Architecture
@@ -356,19 +276,13 @@ goplow/
 - **internal/server/server.go**: Core server logic, message storage, and configuration loading
 - **internal/handlers/handlers.go**: HTTP route handlers for the REST API
 - **internal/static/**: Embedded static files (HTML, CSS, JS) served by the application
+- **internal/utils/**: Utility functions including CORS middleware and handler utilities
+- **web/src/components/**: SolidJS React components for the user interface
+- **web/src/lib/**: Client-side utilities including Server-Sent Events and data transformations
 - **pkg/browser/browser.go**: Cross-platform browser opening utility
-
-## Old Project Structure
-
-```
-goplow/
-├── main.go           # Main application code (single file)
-├── config.toml       # Configuration file (optional)
-├── go.mod            # Go module definition
-├── go.sum            # Dependency checksums
-├── goplow            # Compiled executable
-└── README.md         # This file
-```
+- **data/**: Sample analytics event data files
+- **scripts/**: Build and development automation scripts
+- **schema-validation/**: Schema validation utilities for analytics events
 
 ## Requirements
 
@@ -431,7 +345,7 @@ GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 
 When running the application, you'll see helpful log messages:
 
-```
+```txt
 Starting server on localhost:8081
 Opening browser to http://localhost:8081
 ```
