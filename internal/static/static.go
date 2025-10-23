@@ -64,6 +64,15 @@ func RegisterStaticRoutes(mux *http.ServeMux) {
 		}
 	}
 
+	// Serve schemas from the schemas directory
+	schemasDir := "./schemas"
+	if _, err := os.Stat(schemasDir); err == nil {
+		log.Printf("Serving schemas from %s\n", schemasDir)
+		mux.Handle("/schemas/", http.StripPrefix("/schemas/", http.FileServer(http.Dir(schemasDir))))
+	} else {
+		log.Printf("Schemas directory not found at %s\n", schemasDir)
+	}
+
 	// Keep the old /static/ path for backward compatibility
 	staticFS := GetStaticFS()
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticFS)))

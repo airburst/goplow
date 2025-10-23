@@ -1,0 +1,22 @@
+{
+  "id": 2,
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": {
+    "app_id": "us-chopin",
+    "device_id": "930ae551-2fc8-4e67-b1fe-3e8c8e3d9ecc",
+    "kind": "Self-Describing Event",
+    "payload": {
+      "schema": "iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+      "data": {
+        "schema": "iglu:com.simplybusiness/help_text_opened/jsonschema/1-0-0",
+        "data": {
+          "site": "simplybusiness_us",
+          "vertical": "Usa",
+          "primary_text": "Do you provide a secondary service for customers that is a significant part of your business?",
+          "help_text": "If your business fits in more than one box, tell us about it here."
+        }
+      }
+    },
+    "url": "https://quote-staging.simplybusiness.com/q/usa/usa/business/68f8ca2a3d936a05c26d94f6"
+  }
+}

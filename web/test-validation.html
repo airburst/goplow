@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schema Validation Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+      }
+      .result {
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .unknown {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+      pre {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Schema Validation Test</h1>
+    <p>Testing JSON schema validation with the Go server backend.</p>
+
+    <div id="results">
+      <p>Loading validation functions...</p>
+    </div>
+
+    <script type="module">
+      // Validation functions (inline for testing)
+      class SchemaValidator {
+        constructor() {
+          this.ajv = new window.Ajv2020({
+            strict: false,
+            validateSchema: false,
+            addUsedSchema: false,
+          });
+          window.addFormats(this.ajv);
+        }
+
+        extractSchemaPath(schemaUri) {
+          if (!schemaUri.startsWith("iglu:")) return null;
+          return schemaUri.slice(5);
+        }
+
+        isSimplyBusinessSchema(schemaUri) {
+          return schemaUri.includes("simplybusiness");
+        }
+
+        async loadSchema(schemaPath) {
+          try {
+            const response = await fetch(`/schemas/${schemaPath}`);
+            if (!response.ok) return null;
+            const schema = await response.json();
+            if (schema.$schema) delete schema.$schema;
+            return schema;
+          } catch (error) {
+            console.warn(`Failed to load schema: ${schemaPath}`, error);
+            return null;
+          }
+        }
+
+        validateWithAjv(data, schema) {
+          try {
+            const validate = this.ajv.compile(schema);
+            const isValid = validate(data);
+            if (isValid) {
+              return { isValid: true };
+            } else {
+              const errorMessage = validate.errors
+                ? this.ajv.errorsText(validate.errors)
+                : "Validation failed";
+              return { isValid: false, error: errorMessage };
+            }
+          } catch (error) {
+            return {
+              isValid: false,
+              error: `Schema compilation error: ${error.message}`,
+            };
+          }
+        }
+
+        async findAndValidateSchemas(obj, isSelfDescribingEvent = false) {
+          const results = [];
+          if (!obj || typeof obj !== "object") return results;
+
+          const isNowSDEvent =
+            isSelfDescribingEvent || obj.kind === "Self-Describing Event";
+
+          if (obj.schema && typeof obj.schema === "string") {
+            if (isNowSDEvent && this.isSimplyBusinessSchema(obj.schema)) {
+              const schemaPath = this.extractSchemaPath(obj.schema);
+              if (schemaPath) {
+                const schema = await this.loadSchema(schemaPath);
+                if (schema) {
+                  if (obj.data !== undefined) {
+                    const validation = this.validateWithAjv(obj.data, schema);
+                    results.push(validation);
+                  } else {
+                    results.push({
+                      isValid: false,
+                      error: "No data found to validate against schema",
+                    });
+                  }
+                } else {
+                  results.push({ isValid: "unknown" });
+                }
+              } else {
+                results.push({
+                  isValid: false,
+                  error: "Invalid schema URI format",
+                });
+              }
+            }
+          }
+
+          for (const [key, value] of Object.entries(obj)) {
+            if (value && typeof value === "object") {
+              const nestedResults = await this.findAndValidateSchemas(
+                value,
+                isNowSDEvent
+              );
+              results.push(...nestedResults);
+            }
+          }
+
+          return results;
+        }
+
+        async validateEvent(event) {
+          const hasSDEventKind = (obj) => {
+            if (!obj || typeof obj !== "object") return false;
+            if (obj.kind === "Self-Describing Event") return true;
+            for (const value of Object.values(obj)) {
+              if (hasSDEventKind(value)) return true;
+            }
+            return false;
+          };
+
+          if (!hasSDEventKind(event)) return [];
+          return await this.findAndValidateSchemas(event, false);
+        }
+      }
+
+      // Test data
+      const validEvent = {
+        data: {
+          kind: "Self-Describing Event",
+          payload: {
+            data: {
+              schema:
+                "iglu:com.simplybusiness/help_text_opened/jsonschema/1-0-0",
+              data: {
+                site: "simplybusiness_us",
+                vertical: "Usa",
+                primary_text:
+                  "Do you provide a secondary service for customers?",
+                help_text:
+                  "If your business fits in more than one box, tell us about it here.",
+              },
+            },
+          },
+        },
+      };
+
+      const invalidEvent = {
+        data: {
+          kind: "Self-Describing Event",
+          payload: {
+            data: {
+              schema:
+                "iglu:com.simplybusiness/help_text_opened/jsonschema/1-0-0",
+              data: {
+                site: "simplybusiness_us",
+                // Missing required fields: primary_text, help_text
+              },
+            },
+          },
+        },
+      };
+
+      const nonSDEvent = {
+        kind: "Regular Event",
+        schema: "iglu:com.simplybusiness/help_text_opened/jsonschema/1-0-0",
+        data: { site: "simplybusiness_us" },
+      };
+
+      // Run tests
+      async function runTests() {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "<h2>Test Results</h2>";
+
+        try {
+          const validator = new SchemaValidator();
+
+          // Test 1: Valid event
+          resultsDiv.innerHTML += "<h3>Test 1: Valid Event</h3>";
+          const results1 = await validator.validateEvent(validEvent);
+          resultsDiv.innerHTML += `
+                    <div class="result ${
+                      results1[0]?.isValid === true ? "success" : "error"
+                    }">
+                        <strong>Result:</strong> ${JSON.stringify(
+                          results1,
+                          null,
+                          2
+                        )}
+                    </div>
+                    <pre>${JSON.stringify(validEvent, null, 2)}</pre>
+                `;
+
+          // Test 2: Invalid event
+          resultsDiv.innerHTML +=
+            "<h3>Test 2: Invalid Event (Missing Required Fields)</h3>";
+          const results2 = await validator.validateEvent(invalidEvent);
+          resultsDiv.innerHTML += `
+                    <div class="result ${
+                      results2[0]?.isValid === false ? "success" : "error"
+                    }">
+                        <strong>Result:</strong> ${JSON.stringify(
+                          results2,
+                          null,
+                          2
+                        )}
+                    </div>
+                    <pre>${JSON.stringify(invalidEvent, null, 2)}</pre>
+                `;
+
+          // Test 3: Non-Self-Describing event
+          resultsDiv.innerHTML +=
+            "<h3>Test 3: Non-Self-Describing Event (Should be ignored)</h3>";
+          const results3 = await validator.validateEvent(nonSDEvent);
+          resultsDiv.innerHTML += `
+                    <div class="result ${
+                      results3.length === 0 ? "success" : "error"
+                    }">
+                        <strong>Result:</strong> ${JSON.stringify(
+                          results3,
+                          null,
+                          2
+                        )}
+                    </div>
+                    <pre>${JSON.stringify(nonSDEvent, null, 2)}</pre>
+                `;
+        } catch (error) {
+          resultsDiv.innerHTML += `
+                    <div class="result error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+        }
+      }
+
+      // Load AJV library and run tests
+      const script1 = document.createElement("script");
+      script1.src =
+        "https://cdn.jsdelivr.net/npm/ajv@8.17.1/dist/ajv2020.bundle.min.js";
+      script1.onload = () => {
+        const script2 = document.createElement("script");
+        script2.src =
+          "https://cdn.jsdelivr.net/npm/ajv-formats@3.0.1/dist/ajv-formats.min.js";
+        script2.onload = runTests;
+        document.head.appendChild(script2);
+      };
+      document.head.appendChild(script1);
+    </script>
+  </body>
+</html>
