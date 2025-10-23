@@ -1,15 +1,18 @@
 import type { Component } from "solid-js";
-import { createSignal, createMemo } from "solid-js";
+import { createSignal, createMemo, createEffect } from "solid-js";
 import { type Event } from "../types";
-import {
-  convertEventForCard,
-  extractEventType,
-  getTitleFromEvent,
-} from "../lib/transforms";
+import { convertEventForCard, getTitleFromEvent } from "../lib/transforms";
+import { validateEventSingle } from "../lib/validate-schema";
 import ChevronIcon from "./ChevronIcon";
 
 const EventCard: Component<{ kind: string; event: string }> = (props) => {
   const [isOpen, setIsOpen] = createSignal(false);
+  const [validationStatus, setValidationStatus] = createSignal<
+    "unknown" | "valid" | "invalid"
+  >("unknown");
+  const [validationError, setValidationError] = createSignal<string | null>(
+    null
+  );
 
   const event = createMemo(() => {
     try {
@@ -18,6 +21,33 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
     } catch (error) {
       console.error("Failed to parse event JSON:", error);
       return null;
+    }
+  });
+
+  // Run validation when event changes
+  createEffect(async () => {
+    const eventValue = event();
+    if (eventValue) {
+      try {
+        const result = await validateEventSingle(eventValue);
+        console.log("🚀 ~ EventCard ~ result:", result);
+
+        if (result.isValid === true) {
+          setValidationStatus("valid");
+          setValidationError(null);
+        } else if (result.isValid === false) {
+          setValidationStatus("invalid");
+          setValidationError(result.error || "Validation failed");
+        } else {
+          // result.isValid === "unknown"
+          setValidationStatus("unknown");
+          setValidationError(null);
+        }
+      } catch (error) {
+        console.error("Validation error:", error);
+        setValidationStatus("invalid");
+        setValidationError("Failed to validate event");
+      }
     }
   });
 
@@ -31,9 +61,18 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
   // const { kind, payload } = eventValue.data;
   const eventType = getTitleFromEvent(eventValue);
 
-  // Determine success status (TODO: customize this logic)
-  const isSuccess = true;
-  const statusColor = isSuccess ? "bg-green-500" : "bg-red-500";
+  // Determine status color based on validation
+  const getStatusColor = () => {
+    switch (validationStatus()) {
+      case "valid":
+        return "bg-green-500";
+      case "invalid":
+        return "bg-red-500";
+      case "unknown":
+      default:
+        return "bg-gray-400 animate-pulse shadow-lg";
+    }
+  };
 
   return (
     <div
@@ -53,7 +92,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       >
         {/* Status Badge */}
         <div
-          class={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${statusColor}`}
+          class={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${getStatusColor()}`}
         ></div>
 
         {/* Title */}
@@ -66,11 +105,19 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
       <div
         class="transition-all duration-100 overflow-hidden"
         classList={{
-          "max-h-96": isOpen(),
+          "max-h-[32rem]": isOpen(), // Increased height to accommodate error alert
           "max-h-0": !isOpen(),
         }}
       >
-        <div class="bg-code dark:bg-code p-4 pr-0 rounded-2xl">
+        {/* Error Alert */}
+        {validationStatus() === "invalid" && validationError() && (
+          <div class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4 mx-4">
+            <strong class="font-bold">Validation Error: </strong>
+            <span class="block sm:inline">{validationError()}</span>
+          </div>
+        )}
+
+        <div class="bg-code dark:bg-code p-4 pr-0 rounded-2xl mx-4 mb-4">
           <pre class="text-sm text-gray-300 whitespace-pre-wrap break-words overflow-y-auto max-h-80 scrollbar-themed">
             {JSON.stringify(eventValue, null, 2)}
           </pre>

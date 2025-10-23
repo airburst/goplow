@@ -99,8 +99,6 @@ export const extractEventType = (schema: string): string => {
 };
 
 export const getTitleFromEvent = (event: ConvertedEvent): string => {
-  console.log(event);
-
   const { kind, payload } = event.data;
 
   if (!kind) return "Unknown Event";

@@ -3,6 +3,7 @@ import { validateEvent, validateEventSingle } from "./validate-schema";
 import unstructuredExample from "./fixtures/unstructured-example.json";
 import unstructuredNestedExample from "./fixtures/unstructured-nested-example.json";
 import structuredExample from "./fixtures/structured-example.json";
+import badExample from "./fixtures/bad-example.json";
 
 // Mock the fetch function for schema loading
 const mockFetch = vi.fn();
@@ -384,6 +385,33 @@ describe("validateEventSingle", () => {
       const result = await validateEventSingle(unstructuredNestedExample);
 
       expect(result.isValid).toBe(true);
+    });
+
+    it("should return an error for a missing site in form_question_answered", async () => {
+      // Mock the schema fetch based on the specific schema path
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.includes("service_channel_context/jsonschema/1-0-")) {
+          return {
+            ok: true,
+            json: async () => mockServiceChannelContextSchema,
+          };
+        } else if (url.includes("form_question_answered/jsonschema/1-0-4")) {
+          return {
+            ok: true,
+            json: async () => mockFormQuestionAnsweredSchema,
+          };
+        } else {
+          return {
+            ok: false,
+            status: 404,
+          };
+        }
+      });
+
+      // Use the imported validation example
+      const result = await validateEventSingle(badExample);
+
+      expect(result.isValid).toBe(false);
     });
   });
 });

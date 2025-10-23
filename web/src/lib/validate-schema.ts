@@ -204,6 +204,12 @@ export async function validateEventSingle(
     return { isValid: true };
   }
 
-  // Return the first validation result
+  // Return the first failure if any exist, otherwise return the first result
+  const firstFailure = results.find((result) => result.isValid === false);
+  if (firstFailure) {
+    return firstFailure;
+  }
+
+  // If no failures, return first result (could be true or "unknown")
   return results[0];
 }
