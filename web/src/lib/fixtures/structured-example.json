@@ -1,0 +1,34 @@
+{
+  "id": 1,
+  "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+  "data": {
+    "action": "click",
+    "app_id": "us-chopin",
+    "category": "ai_trade_selector_find_my_business_btn",
+    "context": {
+      "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+      "data": [
+        {
+          "schema": "iglu:com.simplybusiness/distribution_channel_context/jsonschema/1-0-0",
+          "data": {
+            "service_channel_identifier": "simplybusiness_us"
+          }
+        },
+        {
+          "schema": "iglu:com.simplybusiness/service_channel_context/jsonschema/1-0-0",
+          "data": {
+            "service_channel_identifier": "simplybusiness_us"
+          }
+        }
+      ]
+    },
+    "device_id": "930ae551-2fc8-4e67-b1fe-3e8c8e3d9ecc",
+    "kind": "Structured Event",
+    "label": "janit",
+    "property": "https://quote-staging.simplybusiness.com/q/coverage_selection/welcome/68f8c9583d9f6605efa2ebd8?site=simplybusiness_us",
+    "url": "https://quote-staging.simplybusiness.com/q/coverage_selection/welcome/68f8c9583d9f6605efa2ebd8?site=simplybusiness_us",
+    "value": "N/A"
+  },
+  "timestamp": "2025-10-23T20:17:23.602003+01:00",
+  "receivedAt": "2025-10-23T20:17:23.602003+01:00"
+}

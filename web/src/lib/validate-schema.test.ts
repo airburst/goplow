@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { validateEvent, validateEventSingle } from "./validate-schema";
+import unstructuredExample from "./fixtures/unstructured-example.json";
+import unstructuredNestedExample from "./fixtures/unstructured-nested-example.json";
+import structuredExample from "./fixtures/structured-example.json";
 
 // Mock the fetch function for schema loading
 const mockFetch = vi.fn();
@@ -39,6 +42,84 @@ const mockHelpTextOpenedSchema = {
   required: ["site", "primary_text", "help_text"],
   additionalProperties: false,
   title: "Help Text Opened",
+  description: "",
+};
+
+// Mock schema for form_question_answered
+const mockFormQuestionAnsweredSchema = {
+  self: {
+    vendor: "com.simplybusiness",
+    name: "form_question_answered",
+    format: "jsonschema",
+    version: "1-0-4",
+  },
+  type: "object",
+  properties: {
+    site: {
+      type: ["string"],
+      description: "site",
+    },
+    vertical: {
+      type: ["string", "null"],
+      description: "vertical",
+    },
+    journey_id: {
+      type: ["string"],
+      description: "journey_id",
+    },
+    page_index: {
+      type: ["number"],
+      description: "page_index",
+    },
+    page_name: {
+      type: ["string"],
+      description: "page_name",
+    },
+    section_name: {
+      type: ["string"],
+      description: "section_name",
+    },
+    question: {
+      type: ["string"],
+      description: "question",
+    },
+    answer: {
+      type: ["string"],
+      description: "answer",
+    },
+  },
+  required: [
+    "site",
+    "journey_id",
+    "page_index",
+    "page_name",
+    "section_name",
+    "question",
+    "answer",
+  ],
+  additionalProperties: false,
+  title: "Form Question Answered",
+  description: "",
+};
+
+// Mock schema for service_channel_context
+const mockServiceChannelContextSchema = {
+  self: {
+    vendor: "com.simplybusiness",
+    name: "service_channel_context",
+    format: "jsonschema",
+    version: "1-0-1",
+  },
+  type: "object",
+  properties: {
+    service_channel_identifier: {
+      type: ["string"],
+      description: "service_channel_identifier",
+    },
+  },
+  required: ["service_channel_identifier"],
+  additionalProperties: false,
+  title: "Service Channel Context",
   description: "",
 };
 
@@ -247,5 +328,62 @@ describe("validateEventSingle", () => {
     const result = await validateEventSingle(testEvent);
 
     expect(result.isValid).toBe(true);
+  });
+
+  describe("Example JSON Validations", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should validate the structured example JSON successfully", async () => {
+      // Use the imported validation example
+      const result = await validateEventSingle(structuredExample);
+
+      expect(result.isValid).toBe(true);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("should validate the unstructured example JSON successfully", async () => {
+      // Mock the schema fetch for help_text_opened
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockHelpTextOpenedSchema,
+      });
+
+      // Use the imported validation example
+      const result = await validateEventSingle(unstructuredExample);
+
+      expect(result.isValid).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/schemas/com.simplybusiness/help_text_opened/jsonschema/1-0-0"
+      );
+    });
+
+    it("should validate the nested unstructured example JSON successfully", async () => {
+      // Mock the schema fetch based on the specific schema path
+      mockFetch.mockImplementation(async (url: string) => {
+        if (url.includes("service_channel_context/jsonschema/1-0-1")) {
+          return {
+            ok: true,
+            json: async () => mockServiceChannelContextSchema,
+          };
+        } else if (url.includes("form_question_answered/jsonschema/1-0-4")) {
+          return {
+            ok: true,
+            json: async () => mockFormQuestionAnsweredSchema,
+          };
+        } else {
+          return {
+            ok: false,
+            status: 404,
+          };
+        }
+      });
+
+      // Use the imported validation example
+      const result = await validateEventSingle(unstructuredNestedExample);
+
+      expect(result.isValid).toBe(true);
+    });
   });
 });

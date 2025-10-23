@@ -103,7 +103,6 @@ function validateWithAjv(data: any, schema: any): ValidationResult {
     };
   }
 }
-
 /**
  * Recursively searches for schema keys in an object and validates them
  * @param obj - The object to search through
@@ -154,7 +153,7 @@ async function findAndValidateSchemas(
   }
 
   // Recursively search through all object properties
-  for (const [key, value] of Object.entries(obj)) {
+  for (const [_key, value] of Object.entries(obj)) {
     if (value && typeof value === "object") {
       const nestedResults = await findAndValidateSchemas(value, isNowSDEvent);
       results.push(...nestedResults);
