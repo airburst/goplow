@@ -62,6 +62,10 @@ type AppServer struct {
 }
 
 // LoadConfig loads the configuration from a TOML file
+// It checks multiple locations in order of precedence:
+// 1. Local file (same directory as binary)
+// 2. $HOME/.config/goplow.toml
+// 3. Uses defaults if neither exists
 func LoadConfig(filepath string) (Config, error) {
 	config := Config{
 		Server: ServerConfig{
@@ -75,13 +79,30 @@ func LoadConfig(filepath string) (Config, error) {
 		},
 	}
 
-	// Try to read the config file if it exists
-	if _, err := os.Stat(filepath); err == nil {
-		if _, err := toml.DecodeFile(filepath, &config); err != nil {
-			return config, fmt.Errorf("error parsing config file: %w", err)
+	// Build list of config paths to check (in precedence order)
+	configPaths := []string{filepath}
+
+	// Add $HOME/.config/goplow.toml as fallback
+	if home, err := os.UserHomeDir(); err == nil {
+		configPaths = append(configPaths, fmt.Sprintf("%s/.config/goplow.toml", home))
+	}
+
+	// Try each path in order
+	var loadedFrom string
+	for _, path := range configPaths {
+		if _, err := os.Stat(path); err == nil {
+			if _, err := toml.DecodeFile(path, &config); err != nil {
+				return config, fmt.Errorf("error parsing config file at %s: %w", path, err)
+			}
+			loadedFrom = path
+			break
 		}
+	}
+
+	if loadedFrom != "" {
+		log.Printf("Loaded config from %s\n", loadedFrom)
 	} else {
-		log.Printf("Config file not found at %s, using defaults\n", filepath)
+		log.Printf("Config file not found, using defaults\n")
 	}
 
 	return config, nil

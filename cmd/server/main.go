@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// Load configuration
-	config, err := server.LoadConfig("config.toml")
+	config, err := server.LoadConfig("goplow.toml")
 	if err != nil {
 		log.Fatalf("Error loading config: %v\n", err)
 	}

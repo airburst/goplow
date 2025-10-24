@@ -105,7 +105,7 @@ make build
 
 ## Configuration
 
-Create or edit `config.toml` in the same directory as the executable:
+Create or edit `goplow.toml`. The app will look for this file in your `$HOME/.config/` folder, or in the same directory as the executable. A local file takes precedence over the 'global' config. See below for example configuration:
 
 ```toml
 [server]
@@ -123,13 +123,13 @@ max_messages = 100
 events_endpoint = "com.simplybusiness/events"
 ```
 
-If `config.toml` doesn't exist, the application uses default values.
+If `goplow.toml` doesn't exist, the application uses default values.
 
 ## API Endpoints
 
 ### POST `/com.simplybusiness/events` (configurable)
 
-Ingest analytics events. The path is configurable via `events_endpoint` in `config.toml`.
+Ingest analytics events. The path is configurable via `events_endpoint` in `goplow.toml`.
 
 **Request:**
 
@@ -220,7 +220,7 @@ curl http://localhost:8081/com.simplybusiness/events/list
 
 ### Changing the Port
 
-Edit `config.toml`:
+Edit `goplow.toml`:
 
 ```toml
 [server]
@@ -323,7 +323,7 @@ GOOS=windows GOARCH=amd64 go build -o goplow.exe cmd/server/main.go
 ### Message Management
 
 - Messages are stored in memory during the application's runtime
-- Maximum number of messages is configurable via `config.toml`
+- Maximum number of messages is configurable via `goplow.toml`
 - Old messages are removed when the limit is exceeded
 - Messages are automatically cleared when the application restarts
 
