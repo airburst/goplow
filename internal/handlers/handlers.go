@@ -51,6 +51,11 @@ func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 	mux.HandleFunc("/api/events", func(w http.ResponseWriter, r *http.Request) {
 		HandleSSE(w, r, appServer)
 	})
+
+	// Schema latest version endpoint
+	mux.HandleFunc("/api/schema-latest", func(w http.ResponseWriter, r *http.Request) {
+		static.HandleGetLatestSchemaVersion(w, r)
+	})
 }
 
 // ApplyCORSHeaders applies CORS headers from config to the response

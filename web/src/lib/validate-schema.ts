@@ -105,18 +105,55 @@ function compareVersions(
 
 /**
  * Checks if there are newer versions of a schema available
- * NOTE: Version checking is currently disabled to avoid excessive HTTP requests.
- * This feature can be re-enabled in the future if needed for schema discovery.
+ * Queries the server API to get the latest version instead of guessing
  * @param schemaPath - The current schema path (e.g., "com.simplybusiness/help_text_opened/jsonschema/1-0-0")
  * @returns Warning message if newer version exists, null otherwise
  */
 async function checkForNewerVersion(
   schemaPath: string
 ): Promise<string | null> {
-  // Version checking is disabled - it was causing unnecessary 404 requests
-  // even in dev mode, making the console noisy and impacting performance.
-  // Re-enable if there's a specific need to discover newer schema versions.
-  return null;
+  try {
+    // Extract vendor and name from schema path
+    const pathParts = schemaPath.split("/");
+    if (pathParts.length < 2) return null;
+
+    const vendor = pathParts[0];
+    const name = pathParts[1];
+    const currentVersion = pathParts[3];
+
+    const currentVersionObj = parseSchemaVersion(currentVersion);
+    if (!currentVersionObj) return null;
+
+    // Query the API for the latest version
+    const response = await fetch(
+      `/api/schema-latest?vendor=${encodeURIComponent(
+        vendor
+      )}&name=${encodeURIComponent(name)}`
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const latestVersion = data.latestVersion;
+
+    if (!latestVersion) {
+      return null;
+    }
+
+    const latestVersionObj = parseSchemaVersion(latestVersion);
+    if (!latestVersionObj) return null;
+
+    // Compare versions
+    if (compareVersions(latestVersionObj, currentVersionObj) > 0) {
+      return `Newer schema version ${latestVersion} is available (currently using ${currentVersion})`;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**

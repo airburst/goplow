@@ -416,10 +416,6 @@ describe("validateEventSingle", () => {
     });
 
     it("should return a warning when a newer schema version is available", async () => {
-      // NOTE: Version checking is currently disabled to avoid excessive 404 requests
-      // This test now verifies that the warning is NOT generated
-      // (the feature can be re-enabled in the future if needed)
-
       // Mock the schema fetch to simulate schema availability
       mockFetch.mockImplementation(async (url: string) => {
         if (url.includes("service_channel_context/jsonschema/1-0-1")) {
@@ -452,32 +448,24 @@ describe("validateEventSingle", () => {
               additionalProperties: false,
             }),
           };
-        } else if (url.includes("form_question_answered/jsonschema/1-0-4")) {
-          // Simulate newer version exists
-          return {
-            ok: true,
-            json: async () => ({
-              type: "object",
-              properties: {
-                site: { type: "string" },
-                page_index: { type: "integer" },
-                page_name: { type: "string" },
-                section_name: { type: "string" },
-                question: { type: "string" },
-                answer: { type: "string" },
-                new_field: { type: "string" },
-              },
-              required: [
-                "site",
-                "page_index",
-                "page_name",
-                "section_name",
-                "question",
-                "answer",
-              ],
-              additionalProperties: false,
-            }),
-          };
+        } else if (url.includes("/api/schema-latest")) {
+          // Mock the API endpoint to return a newer version for form_question_answered
+          if (url.includes("form_question_answered")) {
+            return {
+              ok: true,
+              json: async () => ({
+                latestVersion: "1-0-4",
+              }),
+            };
+          } else if (url.includes("service_channel_context")) {
+            // No newer version for service_channel_context
+            return {
+              ok: true,
+              json: async () => ({
+                latestVersion: "1-0-1",
+              }),
+            };
+          }
         } else {
           return {
             ok: false,
@@ -489,9 +477,12 @@ describe("validateEventSingle", () => {
       const result = await validateEventSingle(warningExample);
 
       expect(result.isValid).toBe(true);
-      // Version checking is disabled, so no warning should be returned
+      // Should return a warning about the newer version
       if (result.isValid === true) {
-        expect(result.warning).toBeUndefined();
+        expect(result.warning).toContain(
+          "Newer schema version 1-0-4 is available"
+        );
+        expect(result.warning).toContain("currently using 1-0-3");
       }
     });
   });
