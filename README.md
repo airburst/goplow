@@ -1,6 +1,6 @@
 # Goplow ❄️
 
-A single-file Go executable that runs a web server for displaying analytics events in real-time. The application automatically opens your default browser on startup and serves a responsive web interface.
+A single-file Go executable that runs a web server for displaying analytics events in real-time. It decodes event messages and validates them against a library of JSONSchema, then shows whether your events are good, bad, or trailing behind the latest schema versions.
 
 ![Goplow Screenshot](./docs-images/screen-1.png)
 
