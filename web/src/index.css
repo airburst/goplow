@@ -1,18 +1,18 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* TODO: Add a light scheme */
 @theme light {
   --color-main: #23272f;
   --color-card: #343a46;
   --color-code: #16181d;
-  --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, .08);
+  --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, 0.08);
 }
 
 @theme dark {
   --color-main: #23272f;
   --color-card: #343a46;
   --color-code: #16181d;
-  --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, .08);
+  --shadow-inner-border: inset 0 0 0 1px hsla(0, 0%, 100%, 0.08);
 }
 
 body {
@@ -40,6 +40,7 @@ body {
 /* Scrollbar styling for code blocks */
 .scrollbar-themed::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .scrollbar-themed::-webkit-scrollbar-track {
@@ -53,4 +54,8 @@ body {
 
 .scrollbar-themed::-webkit-scrollbar-thumb:hover {
   background: #5a6370;
+}
+
+.scrollbar-themed::-webkit-scrollbar-corner {
+  background: #16181d;
 }
