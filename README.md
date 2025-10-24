@@ -58,7 +58,7 @@ The build process will:
 
 ### Development Mode
 
-For development with hot reloading:
+For development with hot reloading of the frontend **only**:
 
 ```bash
 # In the web directory
@@ -67,9 +67,11 @@ pnpm dev
 
 This will start the Vite development server on `http://localhost:4000`.
 
-### Development Workflow (Full Stack)
+**Note**: Schema validation requires the Go server running on port 8081. If you see 404 errors for schema requests, use the Full Stack development approach below.
 
-To work on both frontend and backend with hot reloading, use development mode:
+### Development Workflow (Full Stack) - Recommended
+
+To work on both frontend and backend with hot reloading:
 
 ```bash
 # From the project root
@@ -78,8 +80,9 @@ To work on both frontend and backend with hot reloading, use development mode:
 
 This will:
 
-- Start the Go server with development mode enabled
-- Start pnpm dev for frontend hot reloading
+- Start the Go server on `http://localhost:8081` with development mode enabled
+- Start pnpm dev for frontend hot reloading on `http://localhost:4000`
+- Automatically proxy `/schemas` requests from frontend to Go server
 - Serve assets from `internal/static-dev` instead of embedded assets
 
 Both processes run in parallel with automatic cleanup on Ctrl+C

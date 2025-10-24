@@ -59,6 +59,15 @@ func RegisterStaticRoutes(mux *http.ServeMux) {
 		log.Printf("DEV MODE: Serving assets from %s\n", devAssetsPath)
 		devAssetsDir := filepath.Join(devAssetsPath, "assets")
 		mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(devAssetsDir))))
+
+		// In dev mode, also serve schemas from the static/schemas directory
+		schemasDir := filepath.Join(devAssetsPath, "..", "static", "schemas")
+		mux.HandleFunc("/schemas/", func(w http.ResponseWriter, r *http.Request) {
+			ServeDevSchemas(w, r, schemasDir)
+		})
+		mux.HandleFunc("/schemas", func(w http.ResponseWriter, r *http.Request) {
+			ListDevSchemas(w, r, schemasDir)
+		})
 	} else {
 		// Production mode: Create an assets subdirectory filesystem for the /assets route
 		assetsFS, err := fs.Sub(staticFiles, "assets")
@@ -67,11 +76,11 @@ func RegisterStaticRoutes(mux *http.ServeMux) {
 		} else {
 			mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assetsFS))))
 		}
-	}
 
-	// Serve embedded schemas
-	mux.HandleFunc("/schemas/", ServeEmbeddedSchemas)
-	mux.HandleFunc("/schemas", ListEmbeddedSchemas)
+		// Serve embedded schemas
+		mux.HandleFunc("/schemas/", ServeEmbeddedSchemas)
+		mux.HandleFunc("/schemas", ListEmbeddedSchemas)
+	}
 
 	// Keep the old /static/ path for backward compatibility
 	staticFS := GetStaticFS()
@@ -143,6 +152,52 @@ func ListEmbeddedSchemas(w http.ResponseWriter, r *http.Request) {
 		if !d.IsDir() {
 			// Remove the "schemas/" prefix for the API response
 			relativePath := strings.TrimPrefix(path, "schemas/")
+			schemas = append(schemas, relativePath)
+		}
+		return nil
+	})
+
+	if err != nil {
+		http.Error(w, "Failed to list schemas", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string][]string{"schemas": schemas})
+}
+
+// ServeDevSchemas serves schema files from disk in dev mode
+func ServeDevSchemas(w http.ResponseWriter, r *http.Request, schemasDir string) {
+	// Extract schema path from URL
+	schemaPath := strings.TrimPrefix(r.URL.Path, "/schemas/")
+
+	// Construct the full path
+	fullPath := filepath.Join(schemasDir, schemaPath)
+
+	// Read the file from disk
+	data, err := os.ReadFile(fullPath)
+	if err != nil {
+		http.Error(w, "Schema not found", http.StatusNotFound)
+		return
+	}
+
+	// Set content type and serve the schema
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+// ListDevSchemas lists all available schemas from disk in dev mode
+func ListDevSchemas(w http.ResponseWriter, r *http.Request, schemasDir string) {
+	var schemas []string
+
+	err := filepath.Walk(schemasDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			// Get relative path from schemasDir
+			relativePath, _ := filepath.Rel(schemasDir, path)
 			schemas = append(schemas, relativePath)
 		}
 		return nil

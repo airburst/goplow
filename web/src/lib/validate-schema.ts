@@ -1,6 +1,20 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 
+/**
+ * Schema Validation Module
+ *
+ * NOTE: For local development, schemas are fetched via HTTP from the Go server.
+ * In dev mode (GOPLOW_DEV_MODE=true), the Go server serves schemas from disk (internal/schemas).
+ * In production, schemas are embedded and served from the compiled binary.
+ *
+ * To run development mode:
+ * - Use: npm run dev (from root) or ./scripts/dev.sh
+ * - This starts both the Go server (port 8081) and Vite dev server (port 4000) automatically
+ * - The Vite proxy forwards /schemas requests to the Go server
+ * - The frontend fetches schemas from /schemas/... which proxies to localhost:8081/schemas/...
+ */
+
 const ajv = new Ajv({
   strict: false, // Allow unknown keywords
   validateSchema: false, // Don't validate the schema itself
@@ -91,76 +105,18 @@ function compareVersions(
 
 /**
  * Checks if there are newer versions of a schema available
+ * NOTE: Version checking is currently disabled to avoid excessive HTTP requests.
+ * This feature can be re-enabled in the future if needed for schema discovery.
  * @param schemaPath - The current schema path (e.g., "com.simplybusiness/help_text_opened/jsonschema/1-0-0")
  * @returns Warning message if newer version exists, null otherwise
  */
 async function checkForNewerVersion(
   schemaPath: string
 ): Promise<string | null> {
-  try {
-    // Extract the base path and current version
-    const pathParts = schemaPath.split("/");
-    if (pathParts.length < 4) return null;
-
-    const vendor = pathParts[0];
-    const name = pathParts[1];
-    const format = pathParts[2];
-    const currentVersion = pathParts[3];
-
-    const currentVersionObj = parseSchemaVersion(currentVersion);
-    if (!currentVersionObj) return null;
-
-    // Try to find newer versions by checking common version patterns
-    // We'll check up to 5 patch versions ahead and 2 minor versions ahead
-    const versionsToCheck = [];
-
-    // Check patch versions
-    for (
-      let patch = currentVersionObj.patch + 1;
-      patch <= currentVersionObj.patch + 5;
-      patch++
-    ) {
-      versionsToCheck.push(
-        `${currentVersionObj.major}-${currentVersionObj.minor}-${patch}`
-      );
-    }
-
-    // Check minor versions
-    for (
-      let minor = currentVersionObj.minor + 1;
-      minor <= currentVersionObj.minor + 2;
-      minor++
-    ) {
-      versionsToCheck.push(`${currentVersionObj.major}-${minor}-0`);
-      versionsToCheck.push(`${currentVersionObj.major}-${minor}-1`);
-    }
-
-    // Check major version (just next one)
-    versionsToCheck.push(`${currentVersionObj.major + 1}-0-0`);
-
-    // Test each potential newer version
-    for (const version of versionsToCheck) {
-      const testPath = `${vendor}/${name}/${format}/${version}`;
-      try {
-        const response = await fetch(`/schemas/${testPath}`);
-        if (response.ok) {
-          const newerVersionObj = parseSchemaVersion(version);
-          if (
-            newerVersionObj &&
-            compareVersions(newerVersionObj, currentVersionObj) > 0
-          ) {
-            return `Newer schema version ${version} is available (currently using ${currentVersion})`;
-          }
-        }
-      } catch {
-        // Ignore fetch errors for version checks
-      }
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
+  // Version checking is disabled - it was causing unnecessary 404 requests
+  // even in dev mode, making the console noisy and impacting performance.
+  // Re-enable if there's a specific need to discover newer schema versions.
+  return null;
 }
 
 /**
@@ -171,8 +127,18 @@ async function checkForNewerVersion(
 async function loadSchema(schemaPath: string): Promise<any | null> {
   try {
     // Fetch schema from the Go server's /schemas/ endpoint
+    // In dev mode, this proxies through Vite to localhost:8081
+    // In production, the Go server serves embedded schemas
     const response = await fetch(`/schemas/${schemaPath}`);
     if (!response.ok) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          `⚠️ Schema fetch failed (${response.status}): /schemas/${schemaPath}\n` +
+            `Make sure you're running the full dev stack:\n` +
+            `  ./scripts/dev.sh (from project root)\n` +
+            `This starts both the Go server (port 8081) and Vite (port 4000) with proxy configured.`
+        );
+      }
       return null;
     }
     const schema = await response.json();

@@ -416,6 +416,10 @@ describe("validateEventSingle", () => {
     });
 
     it("should return a warning when a newer schema version is available", async () => {
+      // NOTE: Version checking is currently disabled to avoid excessive 404 requests
+      // This test now verifies that the warning is NOT generated
+      // (the feature can be re-enabled in the future if needed)
+
       // Mock the schema fetch to simulate schema availability
       mockFetch.mockImplementation(async (url: string) => {
         if (url.includes("service_channel_context/jsonschema/1-0-1")) {
@@ -485,11 +489,9 @@ describe("validateEventSingle", () => {
       const result = await validateEventSingle(warningExample);
 
       expect(result.isValid).toBe(true);
+      // Version checking is disabled, so no warning should be returned
       if (result.isValid === true) {
-        expect(result.warning).toContain(
-          "Newer schema version 1-0-4 is available"
-        );
-        expect(result.warning).toContain("currently using 1-0-3");
+        expect(result.warning).toBeUndefined();
       }
     });
   });
