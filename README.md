@@ -4,6 +4,46 @@ A single-file Go executable that runs a web server for displaying analytics even
 
 ## Quick Start
 
+The quickest way to get up and running is to download the [binary goplow file](https://github.com/airburst/goplow/raw/refs/heads/main/goplow) from this repo. Make the file executable and either run it locally, or copy it to a folder in your `$PATH` list, so it can be run from any terminal on your machine. E.g.
+
+```bash
+# Download file from link above
+
+# Make the file executable
+chmod +x goplow
+
+# Run it from folder
+./goplow
+
+# Or copy it to a folder in your path, and run from anywhere as a command
+mv goplow $HOME/.local/bin
+goplow
+```
+
+## Configuration
+
+If you want to change the listener port or path, etc. then you can create a text file named `goplow.toml`. The app will look for this file in your `$HOME/.config/` folder, or in the same directory as the executable. A local file takes precedence over the 'global' config. See below for example configuration:
+
+```toml
+[server]
+# Server port number (default: 8081)
+port = 8081
+
+# Server host to bind to (default: localhost)
+host = "localhost"
+
+# Maximum number of events to keep in memory (default: 100)
+max_messages = 100
+
+# API endpoint for ingesting analytics events (default: com.simplybusiness/events)
+# This will be registered as /com.simplybusiness/events
+events_endpoint = "com.simplybusiness/events"
+```
+
+If `goplow.toml` doesn't exist, the application uses default values.
+
+## Development
+
 ### Building from Source
 
 ```bash
@@ -102,28 +142,6 @@ make build
 # Run the production binary
 ./goplow
 ```
-
-## Configuration
-
-Create or edit `goplow.toml`. The app will look for this file in your `$HOME/.config/` folder, or in the same directory as the executable. A local file takes precedence over the 'global' config. See below for example configuration:
-
-```toml
-[server]
-# Server port number (default: 8081)
-port = 8081
-
-# Server host to bind to (default: localhost)
-host = "localhost"
-
-# Maximum number of events to keep in memory (default: 100)
-max_messages = 100
-
-# API endpoint for ingesting analytics events (default: com.simplybusiness/events)
-# This will be registered as /com.simplybusiness/events
-events_endpoint = "com.simplybusiness/events"
-```
-
-If `goplow.toml` doesn't exist, the application uses default values.
 
 ## API Endpoints
 
