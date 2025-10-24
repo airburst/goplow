@@ -1,6 +1,6 @@
 import type { Component } from "solid-js";
 import Alert from "./Alert";
-import Code from "./Code";
+import Code from "./Code/Code";
 import type { ValidationStatus } from "../lib/useValidation";
 
 interface EventCardContentProps {
