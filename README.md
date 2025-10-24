@@ -2,6 +2,8 @@
 
 A single-file Go executable that runs a web server for displaying analytics events in real-time. The application automatically opens your default browser on startup and serves a responsive web interface.
 
+![Goplow Screenshot](./docs-images/screen-1.png)
+
 ## Quick Start
 
 The quickest way to get up and running is to download the [binary goplow file](https://github.com/airburst/goplow/raw/refs/heads/main/goplow) from this repo. Make the file executable and either run it locally, or copy it to a folder in your `$PATH` list, so it can be run from any terminal on your machine. E.g.
