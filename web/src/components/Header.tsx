@@ -5,7 +5,7 @@ import Connection from "./Connection";
 const Header: Component<{ subscription?: SSESubscription }> = (props) => {
   return (
     <header class="fixed w-full px-8 py-4 bg-main dark:bg-main flex items-center justify-between">
-      <h1 class="text-2xl">Goplow</h1>
+      <h1 class="text-4xl text-cyan-100 animate-pulse-colors">Goplow</h1>
       {props.subscription && <Connection subscription={props.subscription} />}
     </header>
   );

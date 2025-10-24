@@ -32,6 +32,86 @@ body {
   }
 }
 
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-opacity {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: scaleY(0.3);
+    background-color: rgb(75, 85, 99); /* gray-600 */
+  }
+  50% {
+    transform: scaleY(1);
+    background-color: rgb(34, 211, 238); /* cyan-400 */
+  }
+}
+
+/* Custom animation classes */
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}
+
+.animate-pulse-colors {
+  animation: pulse-opacity 2s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.animate-wave-1 {
+  animation: wave 1.5s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.animate-wave-2 {
+  animation: wave 1.5s ease-in-out infinite;
+  animation-delay: 0.1s;
+}
+
+.animate-wave-3 {
+  animation: wave 1.5s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.animate-wave-4 {
+  animation: wave 1.5s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+.animate-spin-slow {
+  animation: spin 2s linear infinite;
+}
+
 /* Only the first (newest) card slides in */
 .event-card-wrapper:first-child {
   animation: slideInFromTop 0.3s ease-out;
@@ -59,3 +139,4 @@ body {
 .scrollbar-themed::-webkit-scrollbar-corner {
   background: #16181d;
 }
+
