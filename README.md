@@ -24,25 +24,73 @@ goplow
 
 ## Configuration
 
-If you want to change the listener port or path, etc. then you can create a text file named `goplow.toml`. The app will look for this file in your `$HOME/.config/` folder, or in the same directory as the executable. A local file takes precedence over the 'global' config. See below for example configuration:
+Goplow supports flexible configuration through a `goplow.toml` file that can define multiple environments. The app looks for this file in your `$HOME/.config/` folder, or in the same directory as the executable (local file takes precedence).
+
+### Basic Configuration
 
 ```toml
-[server]
+[default]
 # Server port number (default: 8081)
 port = 8081
 
 # Server host to bind to (default: localhost)
 host = "localhost"
 
-# Maximum number of events to keep in memory (default: 100)
-max_messages = 100
+# Maximum number of events to keep in memory (default: 1000)
+max_messages = 1000
 
 # API endpoint for ingesting analytics events (default: com.simplybusiness/events)
 # This will be registered as /com.simplybusiness/events
 events_endpoint = "com.simplybusiness/events"
+
+# CORS allowed origins for the events API (comma-separated list)
+allowed_origins = "http://localhost:3000, http://localhost:4000"
 ```
 
-If `goplow.toml` doesn't exist, the application uses default values.
+### Multi-Environment Support
+
+You can define multiple named environments that override the default configuration. Only specify the values you want to change:
+
+```toml
+[default]
+port = 8081
+host = "localhost"
+max_messages = 1000
+events_endpoint = "com.simplybusiness/events"
+allowed_origins = "http://localhost:3000, http://localhost:4000"
+
+# Custom environment for development
+[dev]
+port = 9090
+host = "0.0.0.0"
+allowed_origins = "http://localhost:5173"
+
+# Production environment with higher capacity
+[production]
+port = 8080
+host = "0.0.0.0"
+max_messages = 5000
+allowed_origins = "https://example.com, https://www.example.com"
+```
+
+### Using Environments
+
+Run goplow with a specific environment using the `--env` or `-e` flag:
+
+```bash
+# Use default configuration
+./goplow
+
+# Use dev environment (merges with defaults)
+./goplow --env=dev
+./goplow -e dev
+
+# Use production environment
+./goplow --env=production
+./goplow -e production
+```
+
+Environment values override the defaults - you only need to specify what changes. If `goplow.toml` doesn't exist, the application uses built-in default values.
 
 ## Development
 
@@ -243,7 +291,7 @@ curl http://localhost:8081/com.simplybusiness/events/list
 Edit `goplow.toml`:
 
 ```toml
-[server]
+[default]
 port = 3000
 host = "localhost"
 ```
@@ -252,6 +300,23 @@ Then run the application:
 
 ```bash
 ./goplow
+```
+
+Or create a custom environment:
+
+```toml
+[default]
+port = 8081
+host = "localhost"
+
+[custom]
+port = 3000
+```
+
+And run with:
+
+```bash
+./goplow --env=custom
 ```
 
 ## Project Structure

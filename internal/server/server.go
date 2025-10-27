@@ -14,20 +14,17 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Server ServerConfig `toml:"server"`
-	CORS   CORSConfig   `toml:"cors"`
+	Default      EnvironmentConfig            `toml:"default"`
+	Environments map[string]EnvironmentConfig `toml:"-"`
 }
 
-// ServerConfig represents server-related configuration
-type ServerConfig struct {
+// EnvironmentConfig represents environment-specific configuration
+// All fields are flattened (no sub-sections)
+type EnvironmentConfig struct {
 	Port           int    `toml:"port"`
 	Host           string `toml:"host"`
 	MaxMsgs        int    `toml:"max_messages"`
 	EventsEndpoint string `toml:"events_endpoint"`
-}
-
-// CORSConfig represents CORS-related configuration
-type CORSConfig struct {
 	AllowedOrigins string `toml:"allowed_origins"`
 }
 
@@ -52,7 +49,7 @@ type SSEClient struct {
 
 // AppServer handles the web server and analytics event management
 type AppServer struct {
-	config      Config
+	config      EnvironmentConfig
 	events      []Event
 	mutex       sync.RWMutex
 	eventID     int
@@ -66,17 +63,15 @@ type AppServer struct {
 // 1. Local file (same directory as binary)
 // 2. $HOME/.config/goplow.toml
 // 3. Uses defaults if neither exists
-func LoadConfig(filepath string) (Config, error) {
-	config := Config{
-		Server: ServerConfig{
-			Port:           8081,
-			Host:           "localhost",
-			MaxMsgs:        100,
-			EventsEndpoint: "com.simplybusiness/events",
-		},
-		CORS: CORSConfig{
-			AllowedOrigins: "http://localhost:3000",
-		},
+// If environment is specified, it merges the named environment with defaults
+func LoadConfig(filepath string, environment string) (EnvironmentConfig, error) {
+	// Set up default configuration
+	defaultConfig := EnvironmentConfig{
+		Port:           8081,
+		Host:           "localhost",
+		MaxMsgs:        100,
+		EventsEndpoint: "com.simplybusiness/events",
+		AllowedOrigins: "http://localhost:3000",
 	}
 
 	// Build list of config paths to check (in precedence order)
@@ -89,27 +84,93 @@ func LoadConfig(filepath string) (Config, error) {
 
 	// Try each path in order
 	var loadedFrom string
+	var rawConfig map[string]interface{}
+
 	for _, path := range configPaths {
 		if _, err := os.Stat(path); err == nil {
-			if _, err := toml.DecodeFile(path, &config); err != nil {
-				return config, fmt.Errorf("error parsing config file at %s: %w", path, err)
+			if _, err := toml.DecodeFile(path, &rawConfig); err != nil {
+				return defaultConfig, fmt.Errorf("error parsing config file at %s: %w", path, err)
 			}
 			loadedFrom = path
 			break
 		}
 	}
 
-	if loadedFrom != "" {
-		log.Printf("Loaded config from %s\n", loadedFrom)
-	} else {
+	if loadedFrom == "" {
 		log.Printf("Config file not found, using defaults\n")
+		return defaultConfig, nil
 	}
 
-	return config, nil
+	log.Printf("Loaded config from %s\n", loadedFrom)
+
+	// Parse the full config structure
+	var fullConfig Config
+	if _, err := toml.DecodeFile(loadedFrom, &fullConfig); err != nil {
+		return defaultConfig, fmt.Errorf("error parsing config file at %s: %w", loadedFrom, err)
+	}
+
+	// Start with defaults from file, or use hardcoded defaults if not present
+	finalConfig := defaultConfig
+	if fullConfig.Default.Port != 0 || fullConfig.Default.Host != "" {
+		finalConfig = fullConfig.Default
+		// Fill in any missing defaults
+		if finalConfig.Port == 0 {
+			finalConfig.Port = defaultConfig.Port
+		}
+		if finalConfig.Host == "" {
+			finalConfig.Host = defaultConfig.Host
+		}
+		if finalConfig.MaxMsgs == 0 {
+			finalConfig.MaxMsgs = defaultConfig.MaxMsgs
+		}
+		if finalConfig.EventsEndpoint == "" {
+			finalConfig.EventsEndpoint = defaultConfig.EventsEndpoint
+		}
+		if finalConfig.AllowedOrigins == "" {
+			finalConfig.AllowedOrigins = defaultConfig.AllowedOrigins
+		}
+	}
+
+	// If an environment is specified, parse and merge it
+	if environment != "" {
+		// Check if environment exists in raw config
+		if _, ok := rawConfig[environment]; ok {
+			// Create a structure to hold all environment configs
+			allEnvs := make(map[string]EnvironmentConfig)
+
+			// Decode the entire file into the map
+			_, err := toml.DecodeFile(loadedFrom, &allEnvs)
+			if err != nil {
+				log.Printf("Warning: error loading environment configs: %v\n", err)
+			} else if envConfig, exists := allEnvs[environment]; exists {
+				// Merge environment config over defaults (only non-zero values)
+				if envConfig.Port != 0 {
+					finalConfig.Port = envConfig.Port
+				}
+				if envConfig.Host != "" {
+					finalConfig.Host = envConfig.Host
+				}
+				if envConfig.MaxMsgs != 0 {
+					finalConfig.MaxMsgs = envConfig.MaxMsgs
+				}
+				if envConfig.EventsEndpoint != "" {
+					finalConfig.EventsEndpoint = envConfig.EventsEndpoint
+				}
+				if envConfig.AllowedOrigins != "" {
+					finalConfig.AllowedOrigins = envConfig.AllowedOrigins
+				}
+				log.Printf("Applied environment configuration: %s\n", environment)
+			}
+		} else {
+			log.Printf("Warning: environment '%s' not found in config file\n", environment)
+		}
+	}
+
+	return finalConfig, nil
 }
 
 // New creates a new application server
-func New(config Config) *AppServer {
+func New(config EnvironmentConfig) *AppServer {
 	return &AppServer{
 		config:     config,
 		events:     make([]Event, 0),
@@ -140,7 +201,7 @@ func (s *AppServer) AddEventWithTime(schema string, data []map[string]interface{
 	s.events = append(s.events, event)
 
 	// Keep only the latest MaxMsgs events
-	if len(s.events) > s.config.Server.MaxMsgs {
+	if len(s.events) > s.config.MaxMsgs {
 		s.events = s.events[1:]
 	}
 
@@ -160,23 +221,23 @@ func (s *AppServer) GetEvents() []Event {
 }
 
 // GetConfig returns the server configuration
-func (s *AppServer) GetConfig() Config {
+func (s *AppServer) GetConfig() EnvironmentConfig {
 	return s.config
 }
 
 // GetAddr returns the server address in format host:port
 func (s *AppServer) GetAddr() string {
-	return fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port)
+	return fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 }
 
 // GetURL returns the full URL for the server
 func (s *AppServer) GetURL() string {
-	return fmt.Sprintf("http://%s:%d", s.config.Server.Host, s.config.Server.Port)
+	return fmt.Sprintf("http://%s:%d", s.config.Host, s.config.Port)
 }
 
 // GetEventsEndpoint returns the configured events endpoint path
 func (s *AppServer) GetEventsEndpoint() string {
-	endpoint := s.config.Server.EventsEndpoint
+	endpoint := s.config.EventsEndpoint
 	if endpoint == "" {
 		endpoint = "com.simplybusiness/events"
 	}
@@ -189,7 +250,7 @@ func (s *AppServer) GetEventsEndpoint() string {
 
 // GetCORSAllowedOrigins returns the configured CORS allowed origins
 func (s *AppServer) GetCORSAllowedOrigins() string {
-	return s.config.CORS.AllowedOrigins
+	return s.config.AllowedOrigins
 }
 
 // SetEventTransformer sets a function to transform events for display

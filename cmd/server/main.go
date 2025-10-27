@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -16,8 +17,13 @@ import (
 )
 
 func main() {
+	// Parse command-line flags
+	environment := flag.String("env", "", "Environment configuration to use (e.g., chopin, production)")
+	flag.StringVar(environment, "e", "", "Environment configuration to use (shorthand)")
+	flag.Parse()
+
 	// Load configuration
-	config, err := server.LoadConfig("goplow.toml")
+	config, err := server.LoadConfig("goplow.toml", *environment)
 	if err != nil {
 		log.Fatalf("Error loading config: %v\n", err)
 	}

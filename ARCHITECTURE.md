@@ -252,55 +252,86 @@ interface ValidationResult {
 
 ### Configuration
 
+Goplow supports multi-environment configuration with a flat structure:
+
 ```toml
 # goplow.toml
 
-[server]
+# Default configuration (always loaded)
+[default]
 port = 8081                          # Server port
 host = "localhost"                   # Server host
 max_messages = 1000                  # Max events to keep in memory
 events_endpoint = "com.simplybusiness/events" # API endpoint path
+allowed_origins = "http://localhost:3000, http://localhost:4000" # CORS origins
 
-[cors]
-allowed_origins = "http://localhost:3000, http://localhost:4000"
+# Optional: Custom environment (overrides defaults)
+[production]
+port = 8080
+host = "0.0.0.0"
+max_messages = 5000
+allowed_origins = "https://example.com"
+```
+
+Run with specific environment:
+```bash
+./goplow              # Uses [default]
+./goplow --env=production  # Merges [production] with [default]
+./goplow -e production     # Shorthand
 ```
 
 ---
 
 ## Configuration Loading
 
-The application supports flexible configuration file loading:
+The application supports flexible configuration file loading with multi-environment support:
 
 ```mermaid
 graph TD
-    App["Application Start"]
-    App -->|LoadConfig goplow.toml| Check1["Check ./goplow.toml<br/>(Local - High Priority)"]
+    App["Application Start<br/>goplow --env=production"]
+    App -->|LoadConfig| Check1["Check ./goplow.toml<br/>(Local - High Priority)"]
 
     Check1 -->|Found| Load1["Load Local Config"]
     Check1 -->|Not Found| Check2["Check ~/.config/goplow.toml<br/>(User Home - Low Priority)"]
 
     Check2 -->|Found| Load2["Load User Config"]
-    Check2 -->|Not Found| Load3["Use Default Config"]
+    Check2 -->|Not Found| Load3["Use Built-in Defaults"]
 
-    Load1 --> Start["Start Server<br/>with Config"]
-    Load2 --> Start
-    Load3 --> Start
+    Load1 --> LoadDefault["Load [default] section"]
+    Load2 --> LoadDefault
+    Load3 --> LoadDefault
+
+    LoadDefault --> CheckEnv{"Environment<br/>specified?"}
+
+    CheckEnv -->|Yes| MergeEnv["Merge [environment]<br/>with [default]"]
+    CheckEnv -->|No| UseDefault["Use [default] only"]
+
+    MergeEnv --> Start["Start Server<br/>with Merged Config"]
+    UseDefault --> Start
 
     Load1 -->|Log| Message1["Config loaded from ./goplow.toml"]
     Load2 -->|Log| Message2["Config loaded from ~/.config/goplow.toml"]
     Load3 -->|Log| Message3["Using default config"]
+    MergeEnv -->|Log| Message4["Applied environment: production"]
 
     style Check1 fill:#10b981
     style Check2 fill:#f59e0b
     style Load3 fill:#ef4444
     style Start fill:#3b82f6
+    style MergeEnv fill:#8b5cf6
 ```
 
 ### Configuration Precedence
 
-1. **Local `goplow.toml`** (highest priority) - in the same directory as the binary
-2. **`~/.config/goplow.toml`** (fallback) - in user's home config directory
-3. **Built-in Defaults** (lowest priority) - hardcoded defaults
+1. **File Location Priority**:
+   - Local `./goplow.toml` (highest priority) - in the same directory as the binary
+   - `~/.config/goplow.toml` (fallback) - in user's home config directory
+   - Built-in defaults (lowest priority) - hardcoded defaults
+
+2. **Environment Merge Priority**:
+   - Named environment values (e.g., `[production]`) override `[default]`
+   - Only non-zero/non-empty values from environment are applied
+   - Unspecified values in environment inherit from `[default]`
 
 ---
 
@@ -477,8 +508,10 @@ graph TD
 
 ### Flexible Configuration
 
-- Multiple config file locations
-- Local config takes precedence over user config
+- Multi-environment support with simple flat structure
+- Multiple config file locations (local takes precedence)
+- Environment-specific overrides merge with defaults
+- CLI flags (`--env` / `-e`) for environment selection
 - Sensible defaults for quick start
 - Easy CORS configuration
 

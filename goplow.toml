@@ -1,27 +1,31 @@
 # Goplow Configuration File
+#
+# This file supports multiple environments. The [default] section contains
+# the base configuration that applies to all environments. You can create
+# additional named environments (e.g., [chopin], [production]) that override
+# specific default values.
+#
+# Usage:
+#   goplow              # Uses default configuration
+#   goplow --env=chopin # Uses chopin environment (merges with defaults)
+#   goplow -e chopin    # Same as above (shorthand)
 
-[server]
-# Server port number (default: 8081)
+[default]
+# Server port number
 port = 8081
 
-# Server host to bind to (default: localhost)
+# Server host to bind to
 host = "localhost"
 
-# Maximum number of messages to keep in memory (default: 1000)
+# Maximum number of messages to keep in memory
 max_messages = 1000
 
-# API endpoint for ingesting analytics events (default: com.simplybusiness/events)
-# This will be registered as /com.simplybusiness/events
-# Examples:
-#   "com.simplybusiness/events" -> /com.simplybusiness/events
-#   "/custom/events" -> /custom/events
-#   "analytics/snowplow" -> /analytics/snowplow
+# API endpoint for ingesting analytics events
 events_endpoint = "com.simplybusiness/events"
 
-[cors]
 # CORS allowed origins for the events API (comma-separated list)
-# Examples:
-#   "http://localhost:3000"
-#   "http://localhost:3000, http://localhost:8081"
-#   "http://example.com"
 allowed_origins = "http://localhost:3000, http://localhost:4000"
+
+# Example environment: account_fe
+[account_fe]
+events_endpoint = "com.snowplowanalytics.snowplow/tp2"
