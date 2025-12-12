@@ -28,3 +28,4 @@ Thumbs.db
 
 # JSON schemas
 /internal/static/schemas/*
+.agman/
