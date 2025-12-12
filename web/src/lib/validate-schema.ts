@@ -147,7 +147,7 @@ async function checkForNewerVersion(
 
     // Compare versions
     if (compareVersions(latestVersionObj, currentVersionObj) > 0) {
-      return `Newer schema version ${latestVersion} is available (currently using ${currentVersion})`;
+      return `${name}: ${currentVersion} → ${latestVersion}`;
     }
 
     return null;
@@ -336,12 +336,18 @@ export async function validateEventSingle(
     return firstFailure;
   }
 
-  // Return the first warning if any exist (valid but with warning)
-  const firstWarning = results.find(
-    (result) => result.isValid === true && result.warning
-  );
-  if (firstWarning) {
-    return firstWarning;
+  // Collect ALL warnings from valid results
+  const allWarnings = results
+    .filter((result): result is ValidationResult =>
+      result.isValid === true && !!result.warning
+    )
+    .map((result) => result.warning!);
+
+  if (allWarnings.length > 0) {
+    return {
+      isValid: true,
+      warning: allWarnings.join("\n"),
+    };
   }
 
   // If no failures or warnings, return first result (could be true or "unknown")

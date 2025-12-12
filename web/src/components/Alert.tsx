@@ -32,7 +32,7 @@ const Alert: Component<AlertProps> = (props) => {
       }`}
     >
       <strong class="font-bold">{props.title}: </strong>
-      <span class="block sm:inline">{props.message}</span>
+      <span class="block sm:inline whitespace-pre-line">{props.message}</span>
     </div>
   );
 };
