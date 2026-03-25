@@ -47,6 +47,7 @@ const EventCard: Component<{ kind: string; event: string }> = (props) => {
         status={validationStatus()}
         isOpen={isOpen()}
         onToggle={() => setIsOpen(!isOpen())}
+        codeText={codeText}
       />
 
       <EventCardContent

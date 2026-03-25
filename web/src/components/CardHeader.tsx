@@ -1,6 +1,7 @@
 import type { Component } from "solid-js";
 import StatusBadge from "./StatusBadge";
 import ChevronIcon from "./ChevronIcon";
+import CopyIcon from "./CopyIcon";
 import type { ValidationStatus } from "../lib/useValidation";
 
 interface CardHeaderProps {
@@ -8,6 +9,7 @@ interface CardHeaderProps {
   status: ValidationStatus;
   isOpen: boolean;
   onToggle: () => void;
+  codeText: string;
 }
 
 const CardHeader: Component<CardHeaderProps> = (props) => {
@@ -16,6 +18,7 @@ const CardHeader: Component<CardHeaderProps> = (props) => {
       onClick={props.onToggle}
       class="w-full flex items-center gap-4 p-4 hover:bg-card transition-colors duration-100 cursor-pointer"
     >
+      <CopyIcon text={props.codeText} />
       <StatusBadge status={props.status} />
       <span class="flex-grow text-left">{props.title}</span>
       <ChevronIcon isOpen={props.isOpen} />
