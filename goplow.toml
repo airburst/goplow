@@ -23,9 +23,10 @@ max_messages = 1000
 # API endpoint for ingesting analytics events
 events_endpoint = "com.simplybusiness/events"
 
-# CORS allowed origins for the events API (comma-separated list)
-allowed_origins = "http://localhost:3000, http://localhost:4000"
+allowed_origins = "http://localhost:3000, http://localhost:4000, http://localhost:5173"
 
 # Example environment: account_fe
 [account_fe]
 events_endpoint = "com.snowplowanalytics.snowplow/tp2"
+# CORS allowed origins for the events API (comma-separated list)
+allowed_origins = "http://localhost:3000, http://localhost:4000"
