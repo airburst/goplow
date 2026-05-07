@@ -45,6 +45,10 @@ type SSEClient struct {
 	Writer  http.ResponseWriter
 	Flusher http.Flusher
 	Done    chan bool
+	// writeMu serializes writes to Writer/Flusher. http.ResponseWriter is not
+	// safe for concurrent use, and broadcastNewEvent runs under an RLock so
+	// multiple goroutines can fan out to the same client at once.
+	writeMu sync.Mutex
 }
 
 // AppServer handles the web server and analytics event management
@@ -348,6 +352,9 @@ func (s *AppServer) SendEventToClient(client *SSEClient, event Event) error {
 		return err
 	}
 
+	client.writeMu.Lock()
+	defer client.writeMu.Unlock()
+
 	// Write SSE format
 	if _, err := fmt.Fprintf(client.Writer, "data: %s\n\n", string(eventJSON)); err != nil {
 		return err
@@ -368,6 +375,9 @@ func (s *AppServer) SendTransformedEventToClient(client *SSEClient, event Event,
 	if err != nil {
 		return err
 	}
+
+	client.writeMu.Lock()
+	defer client.writeMu.Unlock()
 
 	// Write SSE format
 	if _, err := fmt.Fprintf(client.Writer, "data: %s\n\n", string(eventJSON)); err != nil {

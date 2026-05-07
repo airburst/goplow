@@ -24,7 +24,7 @@ func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 	// Register the events endpoint (for ingesting analytics events) with CORS
 	mux.HandleFunc(eventsEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		// Apply CORS headers from config
-		ApplyCORSHeaders(w, appServer)
+		ApplyCORSHeaders(w, r, appServer)
 
 		switch r.Method {
 		case http.MethodPost, http.MethodOptions:
@@ -37,7 +37,7 @@ func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 	// Register GET endpoint for retrieving events with CORS
 	mux.HandleFunc(eventsEndpoint+"/list", func(w http.ResponseWriter, r *http.Request) {
 		// Apply CORS headers from config
-		ApplyCORSHeaders(w, appServer)
+		ApplyCORSHeaders(w, r, appServer)
 
 		switch r.Method {
 		case http.MethodGet:
@@ -58,14 +58,33 @@ func RegisterRoutes(mux *http.ServeMux, appServer *server.AppServer) {
 	})
 }
 
-// ApplyCORSHeaders applies CORS headers from config to the response
-func ApplyCORSHeaders(w http.ResponseWriter, appServer *server.AppServer) {
+// ApplyCORSHeaders applies CORS headers from config to the response.
+// allowed_origins is a comma-separated list. The Access-Control-Allow-Origin
+// header only accepts a single origin (or "*", which is incompatible with
+// credentials), so we match the request's Origin against the allowlist and
+// echo it back when it matches.
+func ApplyCORSHeaders(w http.ResponseWriter, r *http.Request, appServer *server.AppServer) {
 	corsOrigins := appServer.GetCORSAllowedOrigins()
-	if corsOrigins != "" {
-		w.Header().Set("Access-Control-Allow-Origin", corsOrigins)
+	if corsOrigins == "" {
+		return
+	}
+
+	w.Header().Add("Vary", "Origin")
+
+	reqOrigin := r.Header.Get("Origin")
+	if reqOrigin == "" {
+		return
+	}
+
+	for _, allowed := range strings.Split(corsOrigins, ",") {
+		if strings.TrimSpace(allowed) != reqOrigin {
+			continue
+		}
+		w.Header().Set("Access-Control-Allow-Origin", reqOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		return
 	}
 }
 
